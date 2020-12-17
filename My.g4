@@ -11,6 +11,7 @@ statement
     | varDef
     | 'if' '(' expression ')' statement
         ('else' statement)?
+    | 'while' '(' expression ')' statement
     | 'return' expression? ';'
     | 'break' ';'
     | 'continue' ';'
