@@ -1,11 +1,14 @@
 grammar Mx;
 
-program : (classDef | varDef | funcDef)* EOF;
+program : definition* EOF;
+definition : classDef | varDef | funcDef;
 
-varDef : type Identifier ('=' expression)? ';';
+varDef : type varParamList ';';
 classDef : Class Identifier '{' (varDef | funcDef)* '}' ';';
 funcDef : type? Identifier '(' funcParamList? ')' suite;
 
+varParamList : varParam (',' varParam)*;
+varParam : Identifier ('=' expression)? ;
 funcParamList : funcParam (',' funcParam)*;
 funcParam : type Identifier;
 

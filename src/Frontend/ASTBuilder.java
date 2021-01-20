@@ -23,15 +23,32 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 
     @Override public ASTNode visitProgram(MxParser.ProgramContext ctx) {
 		RootNode root = new RootNode(new position(ctx));
-		ctx.varDef().forEach(d -> root.varDefs.add((ASTNode) visit(d)));
+		for (MxParser.DefinitionContext def : ctx.definition()) {
+			if (def.varDef() != null) {
+				ASTNode tmp = (ASTNode)visit(def.varDef());
+				root.varDefs.add(tmp);
+				root.Defs.add(tmp);
+			}
+			if (def.funcDef() != null) {
+				ASTNode tmp = (ASTNode)visit(def.funcDef());
+				root.funcDefs.add(tmp);
+				root.Defs.add(tmp);
+			}
+			if (def.classDef() != null) {
+				ASTNode tmp = (ASTNode)visit(def.classDef());
+				root.classDefs.add(tmp);
+				root.Defs.add(tmp);
+			}
+		}
+		/*ctx.varDef().forEach(d -> root.varDefs.add((ASTNode) visit(d)));
 		ctx.funcDef().forEach(d -> root.funcDefs.add((ASTNode) visit(d)));
-		ctx.classDef().forEach(d -> root.classDefs.add((ASTNode) visit(d)));
+		ctx.classDef().forEach(d -> root.classDefs.add((ASTNode) visit(d)));*/
         return root;
     }
 	
     @Override public ASTNode visitClassDef(MxParser.ClassDefContext ctx) {
         classDefNode classDef = new classDefNode(new position(ctx), ctx.Identifier().toString());
-        ctx.varDef().forEach(vd -> classDef.varDefs.add((varDefStmtNode) visit(vd)));
+        ctx.varDef().forEach(vd -> classDef.varDefs.add((varListStmtNode) visit(vd)));
         ctx.funcDef().forEach(fd -> classDef.funcDefs.add((funcDefNode) visit(fd)));
         return classDef;
     }
@@ -41,12 +58,18 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 	}
 
     @Override public ASTNode visitVarDef(MxParser.VarDefContext ctx) {
-        ExprNode expr = null;
-        if (ctx.expression() != null) expr = (ExprNode)visit(ctx.expression());
+		varListStmtNode varListStmt = new varListStmtNode(new position(ctx));
+		
+		for (MxParser.VarParamContext stmt : ctx.varParamList().varParam()) {
+			ExprNode expr = null;
+			if (stmt.expression() != null) expr = (ExprNode)visit(stmt.expression());
 
-        return new varDefStmtNode(getTypeFromTypeContext(ctx.type()),
-                    ctx.Identifier().toString(),
-                    expr, new position(ctx));
+			varListStmt.stmts.add(new varDefStmtNode(getTypeFromTypeContext(ctx.type()),
+						stmt.Identifier().toString(),
+						expr, new position(stmt)));
+
+		}
+		return varListStmt;
     }
 	
 	@Override public ASTNode visitFuncDef(MxParser.FuncDefContext ctx) {

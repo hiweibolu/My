@@ -18,6 +18,16 @@ public interface MxListener extends ParseTreeListener {
 	 */
 	void exitProgram(MxParser.ProgramContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link MxParser#definition}.
+	 * @param ctx the parse tree
+	 */
+	void enterDefinition(MxParser.DefinitionContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MxParser#definition}.
+	 * @param ctx the parse tree
+	 */
+	void exitDefinition(MxParser.DefinitionContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link MxParser#varDef}.
 	 * @param ctx the parse tree
 	 */
@@ -47,6 +57,26 @@ public interface MxListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitFuncDef(MxParser.FuncDefContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link MxParser#varParamList}.
+	 * @param ctx the parse tree
+	 */
+	void enterVarParamList(MxParser.VarParamListContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MxParser#varParamList}.
+	 * @param ctx the parse tree
+	 */
+	void exitVarParamList(MxParser.VarParamListContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link MxParser#varParam}.
+	 * @param ctx the parse tree
+	 */
+	void enterVarParam(MxParser.VarParamContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link MxParser#varParam}.
+	 * @param ctx the parse tree
+	 */
+	void exitVarParam(MxParser.VarParamContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link MxParser#funcParamList}.
 	 * @param ctx the parse tree

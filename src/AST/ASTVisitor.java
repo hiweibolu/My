@@ -14,6 +14,7 @@ public interface ASTVisitor {
     void visit(ifStmtNode it);
     void visit(returnStmtNode it);
     void visit(varDefStmtNode it);
+    void visit(varListStmtNode it);
     void visit(whileStmtNode it);
 	
     void visit(assignExprNode it);

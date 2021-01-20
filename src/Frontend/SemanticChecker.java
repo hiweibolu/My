@@ -70,9 +70,10 @@ public class SemanticChecker implements ASTVisitor {
         it.classDefs.forEach(d -> d.accept(this));
 		inVarInit = false;
 		
-        it.varDefs.forEach(d -> d.accept(this));
+        /*it.varDefs.forEach(d -> d.accept(this));
         it.classDefs.forEach(d -> d.accept(this));
-        it.funcDefs.forEach(d -> d.accept(this));
+        it.funcDefs.forEach(d -> d.accept(this));*/
+		it.Defs.forEach(d -> d.accept(this));
 		if (!gScope.containsFunction("main", false))
 			throw new semanticError("main() function not found. ", it.pos);
 		if (!gScope.getTypeFunction("main", false).isInt())
@@ -152,6 +153,12 @@ public class SemanticChecker implements ASTVisitor {
 		
 		currentScope = gScope;
 		currentClass = null;
+    }
+
+    @Override
+    public void visit(varListStmtNode it) {
+        if (!it.stmts.isEmpty()) 
+            for (StmtNode stmt : it.stmts) stmt.accept(this);
     }
 
     @Override
@@ -448,18 +455,10 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(varExprNode it) {
-			System.out.println(1);
-		if (currentScope.containsVariable(it.name, false)){
-			System.out.println(2);
-			it.type = currentScope.getTypeVariable(it.name, false);
-			it.left = true;
-			return;
-		}
-		if (currentScope.containsFunction(it.name, notInClass)){
+		/*if (currentScope.containsFunction(it.name, notInClass)){
 			System.out.println(3);
 			it.type = currentScope.getTypeFunction(it.name, notInClass);
 			it.funcName = it.name;
-			//System.out.println(it.name);
 		}
 		else{
 			System.out.println(4);
@@ -467,6 +466,27 @@ public class SemanticChecker implements ASTVisitor {
 				throw new semanticError("Variable not defined. ", it.pos);
 			it.type = currentScope.getTypeVariable(it.name, notInClass);
 			it.left = true;
+		}*/
+		Scope nowScope = currentScope;
+		boolean found = false;
+		while (nowScope != null){
+			if (nowScope.containsVariable(it.name, false)){
+				it.type = nowScope.getTypeVariable(it.name, false);
+				it.left = true;
+				found = true;
+				break;
+			}
+			else if (nowScope.containsFunction(it.name, false)){
+				it.type = nowScope.getTypeFunction(it.name, false);
+				it.funcName = it.name;
+				found = true;
+				break;
+			}
+			if (notInClass == false) break;
+			nowScope = nowScope.parentScope();
+		}
+		if (!found){
+			throw new semanticError("Variable not defined. ", it.pos);
 		}
     }
 }
