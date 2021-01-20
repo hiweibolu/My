@@ -1,7 +1,6 @@
 grammar Mx;
 
-program : definition* EOF;
-definition : varDef | classDef | funcDef;
+program : (classDef | varDef | funcDef)* EOF;
 
 varDef : type Identifier ('=' expression)? ';';
 classDef : Class Identifier '{' (varDef | funcDef)* '}' ';';
@@ -35,8 +34,8 @@ statement
 expression
     : expression '(' (expression (',' expression)* )? ')' # callExpr
     | '(' expression ')' #atomExpr
-    | New BasicType index+ #newExpr
-    | New BasicType ('(' ')')? #newExpr
+    | New basicType index+ #newExpr
+    | New basicType ('(' ')')? #newExpr
     | expression op = ('++' | '--') #suffixExpr
     | expression '[' expression ']' #indexExpr
     | expression '.' Identifier #memberExpr
@@ -68,10 +67,10 @@ literal
     ;
 
 type
-    : BasicType ('[' ']')*
+    : basicType ('[' ']')*
     ;
 
-BasicType
+basicType
     : Int
     | Bool
     | String

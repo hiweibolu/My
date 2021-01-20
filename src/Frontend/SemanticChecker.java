@@ -8,6 +8,7 @@ import Util.globalScope;
 
 import java.util.HashMap;
 import java.util.ArrayList;
+import java.util.Arrays;
 
 public class SemanticChecker implements ASTVisitor {
     private Scope currentScope;
@@ -16,6 +17,7 @@ public class SemanticChecker implements ASTVisitor {
 	private int loopDepth = 0;
 	private boolean haveReturn = false, inFunction = false, notInClass = true;
 	private HashMap<String, Scope> classesScope;
+	private boolean inInit = false, inMainInit = false, inVarInit = false, constructDefined = false;
 
     public SemanticChecker(globalScope gScope) {
         currentScope = this.gScope = gScope;
@@ -23,35 +25,90 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(RootNode it) {
+		Scope stringScope = new Scope(gScope);
 		gScope.addType("int", new Scope(gScope), it.pos);
 		gScope.addType("bool", new Scope(gScope), it.pos);
 		gScope.addType("void", new Scope(gScope), it.pos);
-		gScope.addType("string", new Scope(gScope), it.pos);
-        it.Defs.forEach(d -> d.accept(this));
+		gScope.addType("string", stringScope, it.pos);
+		gScope.defineFunction("print", (new Type("void")).getFuncType(), it.pos);
+		gScope.defineParams("print", new ArrayList<Type>(Arrays.asList(new Type("string"))), it.pos);
+		gScope.defineFunction("println", (new Type("void")).getFuncType(), it.pos);
+		gScope.defineParams("println", new ArrayList<Type>(Arrays.asList(new Type("string"))), it.pos);
+		gScope.defineFunction("printInt", (new Type("void")).getFuncType(), it.pos);
+		gScope.defineParams("printInt", new ArrayList<Type>(Arrays.asList(new Type("int"))), it.pos);
+		gScope.defineFunction("printlnInt", (new Type("void")).getFuncType(), it.pos);
+		gScope.defineParams("printlnInt", new ArrayList<Type>(Arrays.asList(new Type("int"))), it.pos);
+		gScope.defineFunction("getString", (new Type("string")).getFuncType(), it.pos);
+		gScope.defineParams("getString", new ArrayList<Type>(), it.pos);
+		gScope.defineFunction("getInt", (new Type("int")).getFuncType(), it.pos);
+		gScope.defineParams("getInt", new ArrayList<Type>(), it.pos);
+		gScope.defineFunction("toString", (new Type("string")).getFuncType(), it.pos);
+		gScope.defineParams("toString", new ArrayList<Type>(Arrays.asList(new Type("int"))), it.pos);
+		
+		stringScope.defineFunction("length", (new Type("int")).getFuncType(), it.pos);
+		stringScope.defineParams("length", new ArrayList<Type>(), it.pos);
+		stringScope.defineFunction("substring", (new Type("string")).getFuncType(), it.pos);
+		stringScope.defineParams("substring", new ArrayList<Type>(Arrays.asList(new Type("int"), new Type("int"))), it.pos);
+		stringScope.defineFunction("parseInt", (new Type("int")).getFuncType(), it.pos);
+		stringScope.defineParams("parseInt", new ArrayList<Type>(), it.pos);
+		stringScope.defineFunction("ord", (new Type("int")).getFuncType(), it.pos);
+		stringScope.defineParams("ord", new ArrayList<Type>(Arrays.asList(new Type("int"))), it.pos);
+
+		inInit = true;
+		inMainInit = true;
+		it.funcDefs.forEach(fd -> fd.accept(this));
+        it.classDefs.forEach(d -> d.accept(this));
+		inInit = false;
+		inMainInit = false;
+		
+		inVarInit = true;
+        it.classDefs.forEach(d -> d.accept(this));
+		inVarInit = false;
+		
+        it.varDefs.forEach(d -> d.accept(this));
+        it.classDefs.forEach(d -> d.accept(this));
+        it.funcDefs.forEach(d -> d.accept(this));
 		if (!gScope.containsFunction("main", false))
 			throw new semanticError("main() function not found. ", it.pos);
     }
 	
 	@Override
     public void visit(funcDefNode it) {
-		currentScope.defineFunction(it.name, it.type.getFuncType(), it.pos);
-		ArrayList<Type> params = new ArrayList<>();
-		it.funcParams.forEach(p -> params.add(p.type));
-		currentScope.defineFunction(it.name, it.type, it.pos);
-		currentScope.defineParams(it.name, params, it.pos);
-		
-        currentScope = new Scope(currentScope);
-		it.funcParams.forEach(p -> p.accept(this));
-		returnType = it.type;
-		haveReturn = false;
-		inFunction = true;
-        it.block.accept(this);
-		inFunction = false;
-		if (!haveReturn){
-			if (it.name != "main") throw new semanticError("Function has no return. ", it.pos);
+		if (inInit){
+			if (inMainInit){
+				if (currentClass != null){
+					if (it.name.equals(currentClass.name)){
+						if (constructDefined) throw new semanticError("Class constructor redefined. ", it.pos);
+						if (it.type != null) throw new semanticError("Function name is the same as class. ", it.pos);
+						constructDefined = true;
+						it.type = new Type("void");
+					}else{
+						if (it.type == null) throw new semanticError("Constructor name is diff from class. ", it.pos);
+					}
+				}
+				
+				currentScope.defineFunction(it.name, it.type.getFuncType(), it.pos);
+				ArrayList<Type> params = new ArrayList<>();
+				it.funcParams.forEach(p -> params.add(p.type));
+				currentScope.defineParams(it.name, params, it.pos);
+			}
 		}
+		else{
+			//System.out.println(it.name);
+		
+			currentScope = new Scope(currentScope);
+			it.funcParams.forEach(p -> p.accept(this));
+			returnType = it.type;
+			haveReturn = false;
+			inFunction = true;
+			it.block.accept(this);
+			inFunction = false;
+			if (!haveReturn){
+				if (!it.name.equals("main") && !it.type.isVoid()) throw new semanticError("Function has no return. ", it.pos);
+			}
 
-		currentScope = currentScope.parentScope();
+			currentScope = currentScope.parentScope();
+		}
     }
 	
 	@Override
@@ -61,15 +118,29 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(classDefNode it) {
-		currentScope = new Scope(currentScope);
+		
 		currentClass = new Type(it.name);
 		
-        it.varDefs.forEach(vd -> vd.accept(this));
-        it.funcDefs.forEach(fd -> fd.accept(this));
+		if (inInit){
+			currentScope = new Scope(currentScope);
+			constructDefined = false;
+			//inInit = true;
+			it.funcDefs.forEach(fd -> fd.accept(this));
+			//inInit = false;
+			gScope.addType(it.name, currentScope, it.pos);
+		}
+		else if (inVarInit)
+		{
+			currentScope = gScope.getScopeFromName(it.name, it.pos);
+			it.varDefs.forEach(vd -> vd.accept(this));
+		}
+		else {
+			currentScope = gScope.getScopeFromName(it.name, it.pos);
+			it.funcDefs.forEach(fd -> fd.accept(this));
+		}
 		
-		currentClass = null;
-		gScope.addType(it.name, currentScope, it.pos);
 		currentScope = gScope;
+		currentClass = null;
     }
 
     @Override
@@ -84,13 +155,23 @@ public class SemanticChecker implements ASTVisitor {
                             it.init.pos);
         }*/
 		
+		if (gScope.containsType(it.name)) 
+			throw new semanticError("Variable and class name is dumplicated: " + it.name, it.pos);
+		
 		if (!gScope.containsType(it.type.name)) 
-			throw new semanticError("Vardef types havent defined. ", it.pos);
+			throw new semanticError("Vardef types havent defined: " + it.type.name, it.pos);
 		
         if (it.init != null) {
             it.init.accept(this);
-            if (!it.init.type.equals(it.type))
-                throw new semanticError("Vardef types not match. ", it.init.pos);
+			/*if (!it.rhs.type.equals(it.lhs.type)){
+				if ((it.lhs.type.dimension > 0 || it.lhs.type.isClass()) && it.rhs.type.isNull());
+				else throw new semanticError("Assign type not match. ", it.pos);
+			}*/
+
+            if (!it.init.type.equals(it.type)){
+                if ((it.type.dimension > 0 || it.type.isClass()) && it.init.type.isNull());
+				else throw new semanticError("Vardef types not match. ", it.init.pos);
+			}
         }
         currentScope.defineVariable(it.name, it.type, it.pos);
     }
@@ -181,24 +262,31 @@ public class SemanticChecker implements ASTVisitor {
 		ExprNode func = it.Params.get(0);
 		if (!func.type.isFunc)
 			throw new semanticError("callFunc : it is not a function. ", it.pos);
-		ArrayList<Type> tList = currentScope.getParams(func.type.name, true);
+		
+		Scope tempScope = currentScope;
+		if (func.parent != null)
+			currentScope = gScope.getScopeFromName(func.parent.name, it.pos);
+		ArrayList<Type> tList = currentScope.getParams(func.funcName, true);
 		if (it.Params.size() - 1 != tList.size())
 			throw new semanticError("callFunc : params numbers unmatch. ", it.pos);
 		for (int i = 0; i < tList.size(); i++)
 			if (!it.Params.get(i + 1).type.equals(tList.get(i)))
 				throw new semanticError("callFunc : params types unmatch. ", it.pos);
 		it.type = new Type(it.Params.get(0).type);
+		currentScope = tempScope;
     }
 
     @Override
     public void visit(assignExprNode it) {
         it.rhs.accept(this);
         it.lhs.accept(this);
-        if (!it.rhs.type.equals(it.lhs.type))
-            throw new semanticError("Assign type not match. ", it.pos);
+        if (!it.rhs.type.equals(it.lhs.type)){
+            if ((it.lhs.type.dimension > 0 || it.lhs.type.isClass()) && it.rhs.type.isNull());
+			else throw new semanticError("Assign type not match. ", it.pos);
+		}
         /*if (!it.lhs.isAssignable())
             throw new semanticError("Semantic Error: not assignable", it.lhs.pos);*/
-        it.type = new Type(it.rhs.type);
+        it.type = new Type(it.lhs.type);
     }
 	
 	@Override
@@ -289,6 +377,7 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(memberExprNode it) {
 		it.hs.accept(this);
 		Scope tempScope = currentScope;
+		//System.out.println(it.hs.type.name);
 		currentScope = gScope.getScopeFromName(it.hs.type.name, it.pos);
 		notInClass = false;
 		
@@ -297,6 +386,8 @@ public class SemanticChecker implements ASTVisitor {
 		
 		currentScope = tempScope;
 		it.type = it.member.type;
+		it.funcName = it.member.funcName;
+		it.parent = it.hs.type;
 	}
 
 	@Override
@@ -322,6 +413,8 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(varExprNode it) {
 		if (currentScope.containsFunction(it.name, notInClass)){
 			it.type = currentScope.getTypeFunction(it.name, notInClass);
+			it.funcName = it.name;
+			//System.out.println(it.name);
 		}
 		else{
 			if (!currentScope.containsVariable(it.name, notInClass))

@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class newExprNode extends ExprNode {
 	
-	public ArrayList<ExprNode> Exprs;
+	public ArrayList<ExprNode> Exprs = new ArrayList<>();
 	
     public newExprNode(position pos) {
         super(pos);

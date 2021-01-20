@@ -1,4 +1,3 @@
-clear
 set ff=UNIX
 set -e
 mkdir -p bin

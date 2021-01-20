@@ -5,7 +5,7 @@ import java.util.ArrayList;
 
 public class callExprNode extends ExprNode {
 	
-	public ArrayList<ExprNode> Params;
+	public ArrayList<ExprNode> Params = new ArrayList<>();;
 
     public callExprNode(position pos) {
         super(pos);

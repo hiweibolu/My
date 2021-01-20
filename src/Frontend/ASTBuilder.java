@@ -23,16 +23,12 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 
     @Override public ASTNode visitProgram(MxParser.ProgramContext ctx) {
 		RootNode root = new RootNode(new position(ctx));
-		ctx.definition().forEach(d -> root.Defs.add((ASTNode) visit(d)));
+		ctx.varDef().forEach(d -> root.varDefs.add((ASTNode) visit(d)));
+		ctx.funcDef().forEach(d -> root.funcDefs.add((ASTNode) visit(d)));
+		ctx.classDef().forEach(d -> root.classDefs.add((ASTNode) visit(d)));
         return root;
     }
 	
-	@Override public ASTNode visitDefinition(MxParser.DefinitionContext ctx) {
-		if (ctx.varDef() != null) return visit(ctx.varDef());
-        if (ctx.classDef() != null) return visit(ctx.classDef());
-        return visit(ctx.funcDef());
-    }
-
     @Override public ASTNode visitClassDef(MxParser.ClassDefContext ctx) {
         classDefNode classDef = new classDefNode(new position(ctx), ctx.Identifier().toString());
         ctx.varDef().forEach(vd -> classDef.varDefs.add((varDefStmtNode) visit(vd)));
@@ -41,7 +37,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     }
 	
 	public Type getTypeFromTypeContext(MxParser.TypeContext ctx){
-		return new Type(ctx.BasicType().toString(), ctx.LeftBracket().size());
+		return new Type(ctx.basicType().getText(), ctx.LeftBracket().size());
 	}
 
     @Override public ASTNode visitVarDef(MxParser.VarDefContext ctx) {
@@ -140,6 +136,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 		newExprNode newExpr = new newExprNode(new position(ctx));
 		if (ctx.index() != null){
 			boolean flag = false;
+
 			for (int i = 0; i < ctx.index().size(); i++){
 				if (ctx.index(i).expression() != null){
 					if (flag) throw new semanticError("Exprs should be from left to right. ", newExpr.pos);
@@ -147,7 +144,7 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
 				}else flag = true;
 			}
 		}
-		newExpr.type = new Type(ctx.BasicType().toString(), ctx.index().size());
+		newExpr.type = new Type(ctx.basicType().getText(), ctx.index().size());
 		return newExpr;
     }
 	
