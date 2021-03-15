@@ -70,7 +70,8 @@ public class IRBuilder implements ASTVisitor {
 		for (int i = 0; i < it.funcParams.size(); i++){
 			line =  new IRLine(lineType.MOVE);
 			line.args.add(it.funcParams.get(i).regId);
-			line.args.add(new IRRegIdentifier(i, 4, false));
+			if (i < 6) line.args.add(new IRRegIdentifier(i + 10, 0, false));
+			else line.args.add(new IRRegIdentifier(i - 6, 4, false));
 			currentBlock.lines.add(line);
 		}
 
@@ -266,8 +267,8 @@ public class IRBuilder implements ASTVisitor {
 			line.label = loopEnd;
 			currentBlock.lines.add(line);
 		}
-        if (it.incr != null) it.incr.accept(this);
 		if (it.Stmt != null) it.Stmt.accept(this);
+        if (it.incr != null) it.incr.accept(this);
 		
 		line = new IRLine(lineType.JUMP);
 		line.label = loopStart;
@@ -299,7 +300,11 @@ public class IRBuilder implements ASTVisitor {
 		line.func = it.Params.get(0).funcName;
 		currentBlock.lines.add(line);
 
-		it.regId = new IRRegIdentifier(10, 0, false);
+		it.regId = currentBlock.regIdAllocator.alloc(5);
+		line = new IRLine(lineType.MOVE);
+		line.args.add(it.regId);
+		line.args.add(new IRRegIdentifier(10, 0, false));
+		currentBlock.lines.add(line);
 
 		/*ExprNode func = it.Params.get(0);
 		
@@ -337,6 +342,7 @@ public class IRBuilder implements ASTVisitor {
 
 		line = new IRLine(lineType.ADDI);
 		line.args.add(it.hs.regId);
+		line.args.add(it.hs.regId);
 		switch (it.opCode){
 			case addadd:
 				line.args.add(new IRRegIdentifier(1, 8, false));
@@ -357,11 +363,13 @@ public class IRBuilder implements ASTVisitor {
 				it.regId = it.hs.regId;
 				line = new IRLine(lineType.ADDI);
 				line.args.add(it.regId);
+				line.args.add(it.regId);
 				line.args.add(new IRRegIdentifier(1, 8, false));
 				break;
 			case subsub:
 				it.regId = it.hs.regId;
 				line = new IRLine(lineType.ADDI);
+				line.args.add(it.regId);
 				line.args.add(it.regId);
 				line.args.add(new IRRegIdentifier(-1, 8, false));
 				currentBlock.lines.add(line);
@@ -459,11 +467,17 @@ public class IRBuilder implements ASTVisitor {
     public void visit(indexExprNode it) {
 		it.lhs.accept(this);
 		it.rhs.accept(this);
+		IRRegIdentifier temp = currentBlock.regIdAllocator.alloc(5);
+		IRLine line = new IRLine(lineType.ADDI);
+		line.args.add(temp);
+		line.args.add(it.rhs.regId);
+		line.args.add(new IRRegIdentifier(1, 8, false));
+		currentBlock.lines.add(line);
 		IRRegIdentifier regId = currentBlock.regIdAllocator.alloc(5);
-		IRLine line = new IRLine(lineType.INDEX);
+		line = new IRLine(lineType.INDEX);
 		line.args.add(regId);
 		line.args.add(it.lhs.regId);
-		line.args.add(it.rhs.regId);
+		line.args.add(temp);
 		currentBlock.lines.add(line);
 
 		it.regId = new IRRegIdentifier(regId.id, regId.typ, true);
@@ -494,11 +508,18 @@ public class IRBuilder implements ASTVisitor {
 		if (i >= it.Exprs.size()){
 			return new IRRegIdentifier(0, 0, false);
 		}
-		IRRegIdentifier nowRegId = currentBlock.regIdAllocator.alloc(5);
+		IRRegIdentifier nowRegId = currentBlock.regIdAllocator.alloc(1);
 		IRLine line = new IRLine(lineType.MOVE);
 		line.args.add(new IRRegIdentifier(10, 0, false));
 		line.args.add(it.Exprs.get(i).regId);
 		currentBlock.lines.add(line);
+
+		IRRegIdentifier iter = currentBlock.regIdAllocator.alloc(1);
+		line = new IRLine(lineType.LOAD);
+		line.args.add(iter);
+		line.args.add(it.Exprs.get(i).regId);
+		currentBlock.lines.add(line);
+
 		line = new IRLine(lineType.CALL);
 		line.func = "my_array_alloc";
 		currentBlock.lines.add(line);
@@ -507,28 +528,19 @@ public class IRBuilder implements ASTVisitor {
 		line.args.add(new IRRegIdentifier(10, 0, false));
 		currentBlock.lines.add(line);
 
-		IRRegIdentifier iter = currentBlock.regIdAllocator.alloc(5);
-		line = new IRLine(lineType.MOVE);
-		line.args.add(iter);
-		line.args.add(new IRRegIdentifier(0, 0, false));
-		currentBlock.lines.add(line);
-
 		int loopStart = labelAlloc(), loopEnd = labelAlloc();
 		line = new IRLine(lineType.LABEL);
 		line.label = loopStart;
 		currentBlock.lines.add(line);
 		line = new IRLine(lineType.BNEQ);
 		line.args.add(iter);
-		line.args.add(it.Exprs.get(i).regId);
+		line.args.add(new IRRegIdentifier(0, 0, false));
 		line.label = loopEnd;
 		currentBlock.lines.add(line);
-		line = new IRLine(lineType.ADDI);
-		line.args.add(iter);
-		line.args.add(new IRRegIdentifier(1, 8, false));
-		currentBlock.lines.add(line);
 
+		IRRegIdentifier next_result = newMalloc(it, i + 1);
 		IRRegIdentifier result = currentBlock.regIdAllocator.alloc(5);
-		line = new IRLine(lineType.ADD);
+		line = new IRLine(lineType.INDEX);
 		line.args.add(result);
 		line.args.add(nowRegId);
 		line.args.add(iter);
@@ -536,7 +548,15 @@ public class IRBuilder implements ASTVisitor {
 		
 		line = new IRLine(lineType.MOVE);
 		line.args.add(new IRRegIdentifier(result.id, result.typ, true));
-		line.args.add(newMalloc(it, i + 1));
+		line.args.add(next_result);
+		currentBlock.lines.add(line);
+		line = new IRLine(lineType.ADDI);
+		line.args.add(iter);
+		line.args.add(iter);
+		line.args.add(new IRRegIdentifier(-1, 8, false));
+		currentBlock.lines.add(line);
+		line = new IRLine(lineType.JUMP);
+		line.label = loopStart;
 		currentBlock.lines.add(line);
 
 		line = new IRLine(lineType.LABEL);

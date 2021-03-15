@@ -1,4 +1,8 @@
 	.file	"builtin.c"
+	.option nopic
+	.attribute arch, "rv32i2p0_m2p0_a2p0"
+	.attribute unaligned_access, 0
+	.attribute stack_align, 16
 	.text
 	.section	.rodata
 	.align	2
@@ -128,4 +132,25 @@ toString:
 	addi	sp,sp,48
 	jr	ra
 	.size	toString, .-toString
+	.align	2
+	.globl	my_array_alloc
+	.type	my_array_alloc, @function
+my_array_alloc:
+	addi	sp,sp,-32
+	sw	ra,28(sp)
+	sw	s0,24(sp)
+	addi	s0,sp,32
+	sw	a0,-20(s0)
+	lw	a5,-20(s0)
+	addi	a5,a5,1
+	slli	a5,a5,2
+	mv	a0,a5
+	call	malloc
+	mv	a5,a0
+	mv	a0,a5
+	lw	ra,28(sp)
+	lw	s0,24(sp)
+	addi	sp,sp,32
+	jr	ra
+	.size	my_array_alloc, .-my_array_alloc
 	.ident	"GCC: (GNU) 10.2.0"

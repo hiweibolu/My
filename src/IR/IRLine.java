@@ -225,7 +225,16 @@ public class IRLine {
 				System.out.print(args.get(1).toASM() + ",");
 				System.out.println(args.get(2).toASM());
 				break;
-			case INDEX: System.out.print("\tINDEX"); break;
+			case INDEX:
+				System.out.print("\tslli\t");
+				System.out.print(args.get(2).toASM() + ",");
+				System.out.print(args.get(2).toASM() + ",");
+				System.out.println(2);
+				System.out.print("\tadd\t");
+				System.out.print(args.get(0).toASM() + ",");
+				System.out.print(args.get(1).toASM() + ",");
+				System.out.println(args.get(2).toASM());
+				break;
 			case LOAD:
 				switch (args.get(1).typ){
 					case 2:
@@ -264,13 +273,17 @@ public class IRLine {
 			case ADDI:
 				System.out.print("\taddi\t");
 				System.out.print(args.get(0).toASM() + ",");
-				System.out.print(args.get(0).toASM() + ",");
-				System.out.println(args.get(1).id);
+				System.out.print(args.get(1).toASM() + ",");
+				System.out.println(args.get(2).id);
 				break;
 			case SW:
 				System.out.print("\tsw\t");
 				System.out.print(args.get(0).toASM() + ",");
 				switch (args.get(1).typ){
+					case 0:
+						System.out.print(0);
+						System.out.println("(" + args.get(1).toASM() + ")");
+						break;
 					case 1:
 						System.out.print(block.addrLocal(args.get(1).id));
 						System.out.println("(s0)");
@@ -278,6 +291,10 @@ public class IRLine {
 					case 2:
 						System.out.print("%lo(" + args.get(1).toGASM() + ")");
 						System.out.println("(" + args.get(2).toASM() + ")");
+						break;
+					case 4:
+						System.out.print(block.addrParam(args.get(1).id));
+						System.out.println("(s0)");
 						break;
 					case 7:
 						System.out.print(block.addrParam(args.get(1).id));
@@ -289,6 +306,10 @@ public class IRLine {
 				System.out.print("\tlw\t");
 				System.out.print(args.get(0).toASM() + ",");
 				switch (args.get(1).typ){
+					case 0:
+						System.out.print(0);
+						System.out.println("(" + args.get(1).toASM() + ")");
+						break;
 					case 1:
 						System.out.print(block.addrLocal(args.get(1).id));
 						System.out.println("(s0)");
@@ -296,6 +317,10 @@ public class IRLine {
 					case 2:
 						System.out.print("%lo(" + args.get(1).toGASM() + ")");
 						System.out.println("(" + args.get(2).toASM() + ")");
+						break;
+					case 4:
+						System.out.print(block.addrParam(args.get(1).id));
+						System.out.println("(s0)");
 						break;
 				}
 				break;

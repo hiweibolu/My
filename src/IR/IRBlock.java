@@ -36,9 +36,16 @@ public class IRBlock {
 						IRLine line;
 						IRRegIdentifier temp;
 						switch (regId.typ){
+							case 6:
+								temp = regIdAllocator.alloc(5);
+								line = new IRLine(lineType.LW);
+								line.args.add(temp);
+								line.args.add(new IRRegIdentifier(regId.id, 5, false));
+								new_lines.add(line);
+								now_line.args.set(j, temp);
+								break;
 							case 1:
 							case 4:
-							case 6:
 								temp = regIdAllocator.alloc(5);
 								line = new IRLine(lineType.LW);
 								line.args.add(temp);
@@ -95,9 +102,16 @@ public class IRBlock {
 							if (regId.id < 6){
 								break;
 							}
+						case 6:
+							temp = regIdAllocator.alloc(5);
+							line = new IRLine(lineType.SW);
+							line.args.add(temp);
+							line.args.add(new IRRegIdentifier(regId.id, 5, false));
+							new_lines.add(line);
+							now_line.args.set(0, temp);
+							break;
 						case 1:
 						case 4:
-						case 6:
 							temp = regIdAllocator.alloc(5);
 							line = new IRLine(lineType.SW);
 							line.args.add(temp);
