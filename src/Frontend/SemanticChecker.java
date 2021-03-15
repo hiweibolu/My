@@ -3,12 +3,14 @@ package Frontend;
 import AST.*;
 import Util.Scope;
 import Util.Type;
+import Util.RegIdAllocator;
 import Util.error.semanticError;
 import Util.globalScope;
 
 import java.util.HashMap;
 import java.util.ArrayList;
 import java.util.Arrays;
+import IR.*;
 
 public class SemanticChecker implements ASTVisitor {
     private Scope currentScope;
@@ -19,8 +21,11 @@ public class SemanticChecker implements ASTVisitor {
 	private HashMap<String, Scope> classesScope;
 	private boolean inInit = false, inMainInit = false, inVarInit = false, constructDefined = false;
 
-    public SemanticChecker(globalScope gScope) {
+    private IRBlockList gBList;
+    public SemanticChecker(IRBlockList gBList, globalScope gScope) {
         currentScope = this.gScope = gScope;
+		gScope.regIdAllocator = new RegIdAllocator();
+        this.gBList = gBList;
     }
 	
     @Override
@@ -70,9 +75,6 @@ public class SemanticChecker implements ASTVisitor {
         it.classDefs.forEach(d -> d.accept(this));
 		inVarInit = false;
 		
-        /*it.varDefs.forEach(d -> d.accept(this));
-        it.classDefs.forEach(d -> d.accept(this));
-        it.funcDefs.forEach(d -> d.accept(this));*/
 		it.Defs.forEach(d -> d.accept(this));
 		if (!gScope.containsFunction("main", false))
 			throw new semanticError("main() function not found. ", it.pos);
@@ -107,6 +109,9 @@ public class SemanticChecker implements ASTVisitor {
 			//System.out.println(it.name);
 		
 			currentScope = new Scope(currentScope);
+			currentScope.regIdAllocator = new RegIdAllocator();
+			it.scope = currentScope;
+
 			it.funcParams.forEach(p -> p.accept(this));
 			returnType = it.type;
 			haveReturn = false;
@@ -123,7 +128,9 @@ public class SemanticChecker implements ASTVisitor {
 	
 	@Override
     public void visit(funcParamNode it) {
-		currentScope.defineVariable(it.name, it.type, it.pos);
+		it.scope = currentScope;
+
+		it.regId = currentScope.defineVariable(it.name, it.type, it.pos, 1);
     }
 
     @Override
@@ -135,10 +142,10 @@ public class SemanticChecker implements ASTVisitor {
 		
 		if (inInit){
 			currentScope = new Scope(currentScope);
+			it.scope = currentScope;
+
 			constructDefined = false;
-			//inInit = true;
 			it.funcDefs.forEach(fd -> fd.accept(this));
-			//inInit = false;
 			gScope.addType(it.name, currentScope, it.pos);
 		}
 		else if (inVarInit)
@@ -157,22 +164,16 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(varListStmtNode it) {
+		it.scope = currentScope;
+
         if (!it.stmts.isEmpty()) 
             for (StmtNode stmt : it.stmts) stmt.accept(this);
     }
 
     @Override
     public void visit(varDefStmtNode it) {
-        /*if (currentStruct != null) {
-            assert (currentStruct.members != null);
-            if (currentStruct.members.containsKey(it.name))
-                throw new semanticError("redefinition of member " + it.name, it.pos);
-            currentStruct.members.put(it.name, gScope.getTypeFromName(it.typeName, it.pos));
-            if (it.init != null)
-                throw new semanticError("Yx does not support default init of members",
-                            it.init.pos);
-        }*/
-		
+		it.scope = currentScope;
+
 		if (gScope.containsType(it.name)) 
 			throw new semanticError("Variable and class name is dumplicated: " + it.name, it.pos);
 		
@@ -184,23 +185,26 @@ public class SemanticChecker implements ASTVisitor {
 		
         if (it.init != null) {
             it.init.accept(this);
-			/*if (!it.rhs.type.equals(it.lhs.type)){
-				if ((it.lhs.type.dimension > 0 || it.lhs.type.isClass()) && it.rhs.type.isNull());
-				else throw new semanticError("Assign type not match. ", it.pos);
-			}*/
-
             if (!it.init.type.equals(it.type)){
                 if ((it.type.dimension > 0 || it.type.isClass()) && it.init.type.isNull());
 				else throw new semanticError("Vardef types not match. ", it.init.pos);
 			}
         }
-        currentScope.defineVariable(it.name, it.type, it.pos);
+		if (currentScope == gScope){
+			gBList.globals.add(0);
+		}
+        
+		if (gScope == currentScope) currentScope.defineVariable(it.name, it.type, it.pos, 2);
+		else currentScope.defineVariable(it.name, it.type, it.pos, 1);
     }
 
     @Override
     public void visit(returnStmtNode it) {
+		it.scope = currentScope;
+
 		if (!inFunction)
 			throw new semanticError("Cant return coz it is not in a function. ", it.pos);
+
 		haveReturn = true;
         if (it.value != null) {
             it.value.accept(this);
@@ -216,6 +220,8 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(blockStmtNode it) {
+		it.scope = currentScope;
+
         if (!it.stmts.isEmpty()) {
             currentScope = new Scope(currentScope);
             for (StmtNode stmt : it.stmts) stmt.accept(this);
@@ -225,23 +231,31 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(exprStmtNode it) {
+		it.scope = currentScope;
+
         it.expr.accept(this);
     }
 	
 	@Override
     public void visit(breakStmtNode it) {
+		it.scope = currentScope;
+
         if (loopDepth <= 0)
 			throw new semanticError("Cant break coz it is not in a loop. ", it.pos);
     }
 	
 	@Override
     public void visit(continueStmtNode it) {
+		it.scope = currentScope;
+
         if (loopDepth <= 0)
 			throw new semanticError("Cant continue coz it is not in a loop. ", it.pos);
     }
 
 	@Override
     public void visit(whileStmtNode it) {
+		it.scope = currentScope;
+
         if (it.condition != null){
 			it.condition.accept(this);
 			if (!it.condition.type.isBool())
@@ -257,6 +271,8 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(ifStmtNode it) {
+		it.scope = currentScope;
+
         it.condition.accept(this);
         if (!it.condition.type.isBool())
             throw new semanticError("If condition should be a bool",
@@ -271,6 +287,8 @@ public class SemanticChecker implements ASTVisitor {
 	
     @Override
     public void visit(forStmtNode it) {
+		it.scope = currentScope;
+
         if (it.condition != null){
 			it.condition.accept(this);
 			if (!it.condition.type.isBool())
@@ -293,10 +311,13 @@ public class SemanticChecker implements ASTVisitor {
 		ExprNode func = it.Params.get(0);
 		if (!func.type.isFunc)
 			throw new semanticError("callFunc : it is not a function. ", it.pos);
+		it.scope = currentScope;
 		
 		Scope tempScope = currentScope;
 		if (func.parent != null)
 			currentScope = gScope.getScopeFromName(func.parent.name, it.pos);
+
+		
 		ArrayList<Type> tList = currentScope.getParams(func.funcName, true);
 		if (it.Params.size() - 1 != tList.size())
 			throw new semanticError("callFunc : params numbers unmatch. ", it.pos);
@@ -319,8 +340,6 @@ public class SemanticChecker implements ASTVisitor {
             if ((it.lhs.type.dimension > 0 || it.lhs.type.isClass()) && it.rhs.type.isNull());
 			else throw new semanticError("Assign type not match. ", it.pos);
 		}
-        /*if (!it.lhs.isAssignable())
-            throw new semanticError("Semantic Error: not assignable", it.lhs.pos);*/
         it.type = new Type(it.lhs.type);
     }
 	
@@ -415,7 +434,6 @@ public class SemanticChecker implements ASTVisitor {
     public void visit(memberExprNode it) {
 		it.hs.accept(this);
 		Scope tempScope = currentScope;
-		//System.out.println(it.hs.type.name);
 		if (it.hs.type.dimension > 0){
 			currentScope = gScope.getScopeFromName("!array", it.pos);
 		}else currentScope = gScope.getScopeFromName(it.hs.type.name, it.pos);
@@ -444,7 +462,9 @@ public class SemanticChecker implements ASTVisitor {
 	}
 
     @Override
-    public void visit(literalExprNode it) {}
+    public void visit(literalExprNode it) {
+		it.scope = currentScope;
+	}
 
 	@Override
     public void visit(thisExprNode it) {
@@ -455,18 +475,7 @@ public class SemanticChecker implements ASTVisitor {
 
     @Override
     public void visit(varExprNode it) {
-		/*if (currentScope.containsFunction(it.name, notInClass)){
-			System.out.println(3);
-			it.type = currentScope.getTypeFunction(it.name, notInClass);
-			it.funcName = it.name;
-		}
-		else{
-			System.out.println(4);
-			if (!currentScope.containsVariable(it.name, notInClass))
-				throw new semanticError("Variable not defined. ", it.pos);
-			it.type = currentScope.getTypeVariable(it.name, notInClass);
-			it.left = true;
-		}*/
+		it.scope = currentScope;
 		Scope nowScope = currentScope;
 		boolean found = false;
 		while (nowScope != null){

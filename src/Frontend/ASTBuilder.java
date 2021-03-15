@@ -255,11 +255,11 @@ public class ASTBuilder extends MxBaseVisitor<ASTNode> {
     @Override public ASTNode visitLiteralExpr(MxParser.LiteralExprContext ctx) {
         /*return new constExprNode(Integer.parseInt(ctx.DecimalInteger().toString()),
                                  intType, new position(ctx));*/
-		if (ctx.literal().True() != null) return new literalExprNode(new Type("bool"), new position(ctx));
-		if (ctx.literal().False() != null) return new literalExprNode(new Type("bool"), new position(ctx));
-		if (ctx.literal().DecimalInteger() != null) return new literalExprNode(new Type("int"), new position(ctx));
-		if (ctx.literal().StringConstant() != null) return new literalExprNode(new Type("string"), new position(ctx));
-		return new literalExprNode(new Type("null"), new position(ctx));
+		if (ctx.literal().True() != null) return new literalExprNode(new Type("bool"), new position(ctx), ctx);
+		if (ctx.literal().False() != null) return new literalExprNode(new Type("bool"), new position(ctx), ctx);
+		if (ctx.literal().DecimalInteger() != null) return new literalExprNode(new Type("int"), new position(ctx), ctx);
+		if (ctx.literal().StringConstant() != null) return new literalExprNode(new Type("string"), new position(ctx), ctx);
+		return new literalExprNode(new Type("null"), new position(ctx), ctx);
     }
 
 }

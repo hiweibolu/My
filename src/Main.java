@@ -9,11 +9,8 @@ import Util.globalScope;
 import org.antlr.v4.runtime.CharStreams;
 import org.antlr.v4.runtime.CommonTokenStream;
 import org.antlr.v4.runtime.tree.ParseTree;
-/*import Assembly.AsmFn;
-import Frontend.SymbolCollector;
-import Backend.*;
-import MIR.block;
-import MIR.mainFn;*/
+import IR.IRBlockList;
+import IR.IRBuilder;
 
 import java.io.FileInputStream;
 import java.io.InputStream;
@@ -21,7 +18,17 @@ import java.io.InputStream;
 
 public class Main {
     public static void main(String[] args) throws Exception{
+		boolean onlySemantic = false;
+		for (String arg : args) {
+			switch (arg) {
+				case "-semantic":
+					onlySemantic = true;
+					break;
+			}
+		}
 
+        /*String name = "test1.mx";
+        InputStream input = new FileInputStream(name);*/
         InputStream input = System.in;
 
         try {
@@ -37,8 +44,16 @@ public class Main {
             ParseTree parseTreeRoot = parser.program();
             ASTBuilder astBuilder = new ASTBuilder(gScope);
             ASTRoot = (RootNode)astBuilder.visit(parseTreeRoot);
-            //new SymbolCollector(gScope).visit(ASTRoot);
-            new SemanticChecker(gScope).visit(ASTRoot);
+
+            IRBlockList gIRList = new IRBlockList();
+            new SemanticChecker(gIRList, gScope).visit(ASTRoot);
+
+			if (!onlySemantic){
+            	new IRBuilder(gIRList, gScope).visit(ASTRoot);
+				gIRList.initASM();
+				//gIRList.print();
+				gIRList.printASM();
+			}
 
             /*mainFn f = new mainFn();
             new IRBuilder(f, gScope).visit(ASTRoot);
