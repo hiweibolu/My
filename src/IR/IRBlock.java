@@ -20,6 +20,7 @@ public class IRBlock {
     public void print(){
         lines.forEach(l -> l.print());
     }
+	private int now_local;
 
 	public void expand(){
 		ArrayList<IRLine> new_lines = new ArrayList<>();
@@ -29,8 +30,10 @@ public class IRBlock {
 			boolean no_need_add = false;
 			switch (now_line.lineCode){
 				default:
+				case SW:
 					j = 1;
 				case BNEQ:
+				case LW:
 					for (; j < now_line.args.size(); j++){
 						IRRegIdentifier regId = now_line.args.get(j);
 						IRLine line;
@@ -88,12 +91,11 @@ public class IRBlock {
 				case FUNC:
 				case LABEL:
 				case JUMP:
-				case LW:
-				case SW:
 			}
 			if (!no_need_add) new_lines.add(now_line);
 			switch (now_line.lineCode){
 				default:
+				case SW:
 					IRRegIdentifier regId = now_line.args.get(0);
 					IRLine line;
 					IRRegIdentifier temp, temp2;
@@ -141,7 +143,70 @@ public class IRBlock {
 				case CALL:
 				case RETURN:
 				case LW:
+			}
+		}
+		lines = new_lines;
+		now_local = regIdAllocator.size(1);
+	}
+	public void expandLocal(){
+		ArrayList<IRLine> new_lines = new ArrayList<>();
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			int j = 0;
+			switch (now_line.lineCode){
+				default:
 				case SW:
+					j = 1;
+				case BNEQ:
+				case LW:
+					for (; j < now_line.args.size(); j++){
+						IRRegIdentifier regId = now_line.args.get(j);
+						IRLine line;
+						IRRegIdentifier temp;
+						switch (regId.typ){
+							case 1:
+								if (regId.id < now_local) break;
+								temp = regIdAllocator.alloc(5);
+								line = new IRLine(lineType.LW);
+								line.args.add(temp);
+								line.args.add(regId);
+								new_lines.add(line);
+								now_line.args.set(j, temp);
+								break;
+						}
+					}
+					break;
+				case CALL:
+				case RETURN:
+				case FUNC:
+				case LABEL:
+				case JUMP:
+			}
+			new_lines.add(now_line);
+			switch (now_line.lineCode){
+				default:
+				case SW:
+					IRRegIdentifier regId = now_line.args.get(0);
+					IRLine line;
+					IRRegIdentifier temp;
+					switch (regId.typ){
+						case 1:
+							if (regId.id < now_local) break;
+							temp = regIdAllocator.alloc(5);
+							line = new IRLine(lineType.SW);
+							line.args.add(temp);
+							line.args.add(regId);
+							new_lines.add(line);
+							now_line.args.set(0, temp);
+							break;
+					}
+				case BNEQ:
+				case FUNC:
+				case LABEL:
+				case JUMP:
+				case CALL:
+				case RETURN:
+				case LW:
 			}
 		}
 		lines = new_lines;
@@ -192,7 +257,8 @@ public class IRBlock {
 		}
 	}
 	public void alloc(){
-		used = new int [regIdAllocator.size(5)];
+		int temp_size = regIdAllocator.size(5);
+		used = new int [temp_size];
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
 			for (int j = 0; j < now_line.args.size(); j++){
@@ -200,8 +266,9 @@ public class IRBlock {
 				if (regId.typ == 5) used[regId.id]++;
 			}
 		}
-		used_reg = new IRRegIdentifier [regIdAllocator.size(5)];
-		used_l_reg = new IRRegIdentifier [regIdAllocator.size(5)];
+		used_reg = new IRRegIdentifier [temp_size];
+		used_l_reg = new IRRegIdentifier [temp_size];
+		for (int i = 0; i < 32; i++) free_reg[i] = 0;
 		for (int i = 10; i <= 15; i++) free_reg[i] = 1;
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
@@ -230,7 +297,62 @@ public class IRBlock {
 					easyRelease(now_line, 0, now_line.args.size());
 					break;
 				case CALL:
-					for (int j = 10; j <= 15; j++) free_reg[j] = 1;
+					for (int j = 0; j < temp_size; j++){
+						if (used[j] > 0){
+							if (used_reg[j] != null){
+								//System.out.println("hello");
+								IRRegIdentifier new_reg = regIdAllocator.alloc(1);
+								used_reg[j].id = new_reg.id;
+								used_reg[j].typ = new_reg.typ;
+								used_reg[j].pointer = new_reg.pointer;
+								used[j] = 0;
+							}
+						}
+					}
+					for (int j = 10; j <= 15; j++){
+						free_reg[j] = 1;
+					}
+					break;
+				case FUNC:
+				case LABEL:
+				case JUMP:
+				case RETURN:
+			}
+		}
+	}
+	public void allocLocal(){
+		int temp_size = regIdAllocator.size(5);
+		used = new int [temp_size];
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			for (int j = 0; j < now_line.args.size(); j++){
+				IRRegIdentifier regId = now_line.args.get(j);
+				if (regId.typ == 5) used[regId.id]++;
+			}
+		}
+		used_reg = new IRRegIdentifier [temp_size];
+		used_l_reg = new IRRegIdentifier [temp_size];
+		for (int i = 0; i < 32; i++) free_reg[i] = 0;
+		for (int i = 16; i <= 17; i++) free_reg[i] = 1;
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			switch (now_line.lineCode){
+				default:
+				case LW:
+					easyAlloc(now_line, 1, now_line.args.size());
+					easyRelease(now_line, 1, now_line.args.size());
+					easyAlloc(now_line, 0, 1);
+					easyRelease(now_line, 0, 1);
+					break;
+				case BNEQ:
+				case SW:
+					easyAlloc(now_line, 0, now_line.args.size());
+					easyRelease(now_line, 0, now_line.args.size());
+					break;
+				case CALL:
+					for (int j = 16; j <= 17; j++){
+						free_reg[j] = 1;
+					}
 					break;
 				case FUNC:
 				case LABEL:

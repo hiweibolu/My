@@ -79,6 +79,16 @@ public class IRBuilder implements ASTVisitor {
 		if (it.name.equals("main")) gVarDefs.forEach(d -> d.accept(this));
 
 		it.block.accept(this);
+
+		if (it.name.equals("main") && gBList.haveNoReturn){
+			line = new IRLine(lineType.MOVE);
+			line.args.add(new IRRegIdentifier(10, 0, false));
+			line.args.add(new IRRegIdentifier(0, 0, false));
+			currentBlock.lines.add(line);
+			line = new IRLine(lineType.JUMP);
+			line.label = currentBlock.returnLabel;
+			currentBlock.lines.add(line);
+		}
     }
 	
 	@Override
@@ -298,6 +308,10 @@ public class IRBuilder implements ASTVisitor {
 		}
 		IRLine line = new IRLine(lineType.CALL);
 		line.func = it.Params.get(0).funcName;
+		/*for (int i = 2; i < it.Params.size(); i++){
+			if (i > 6) break;
+			line.args.add(new IRRegIdentifier(i + 9, 0, false));
+		}*/
 		currentBlock.lines.add(line);
 
 		it.regId = currentBlock.regIdAllocator.alloc(5);

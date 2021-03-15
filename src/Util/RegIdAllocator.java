@@ -4,7 +4,7 @@ import IR.IRRegIdentifier;
 
 public class RegIdAllocator {
 
-    private int[] nowRegId = new int[10];
+    private int[] nowRegId = new int[20];
 
     public IRRegIdentifier alloc(int typ){
         return new IRRegIdentifier(nowRegId[typ]++, typ, false);

@@ -120,6 +120,9 @@ public class SemanticChecker implements ASTVisitor {
 			inFunction = false;
 			if (!haveReturn){
 				if (!it.name.equals("main") && !it.type.isVoid()) throw new semanticError("Function has no return. ", it.pos);
+				if (it.name.equals("main")){
+					gBList.haveNoReturn = true;
+				}
 			}
 
 			currentScope = currentScope.parentScope();

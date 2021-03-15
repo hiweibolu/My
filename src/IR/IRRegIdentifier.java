@@ -15,7 +15,7 @@ public class IRRegIdentifier{
 	}
 
 	public void print(){
-		if (pointer) System.out.print("*");
+		//if (pointer) System.out.print("*");
 		switch (typ){
 			case 1: System.out.print("L"); break;
 			case 2: System.out.print("G"); break;
@@ -26,6 +26,7 @@ public class IRRegIdentifier{
 			case 7: System.out.print("LP"); break;
 			case 8: System.out.print("i"); break;
 			case 9: System.out.print("S"); break;
+			case 10: System.out.print("Q"); break;
 		}
 		System.out.print(id);
 	}

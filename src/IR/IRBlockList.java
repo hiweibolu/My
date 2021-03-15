@@ -7,6 +7,7 @@ public class IRBlockList {
 	public ArrayList<IRBlock> blocks = new ArrayList<>();
 	public ArrayList<String> strings = new ArrayList<>();
     public ArrayList<Integer> globals = new ArrayList<>();
+	public boolean haveNoReturn = false;
 
     public int addString(String s){
         int size = strings.size();
@@ -36,6 +37,8 @@ public class IRBlockList {
 	public void initASM(){
 		blocks.forEach(b -> b.expand());
 		blocks.forEach(b -> b.alloc());
+		blocks.forEach(b -> b.expandLocal());
+		blocks.forEach(b -> b.allocLocal());
 		blocks.forEach(b -> b.remove());
 		blocks.forEach(b -> b.calcRAM());
 	}
