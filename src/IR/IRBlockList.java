@@ -46,7 +46,7 @@ public class IRBlockList {
 			for (int i = 0; i < strings.size(); i++){
 				if (i == 0) System.out.println("\t.section\t.rodata");
 				System.out.println("\t.align\t2");
-				System.out.print(".LC");
+				System.out.print(".LS");
 				System.out.print(i);
 				System.out.println(":");
 				System.out.print("\t.string\t");

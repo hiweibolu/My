@@ -19,17 +19,18 @@ import java.io.InputStream;
 public class Main {
     public static void main(String[] args) throws Exception{
 		boolean onlySemantic = false;
+		InputStream input = System.in;
 		for (String arg : args) {
 			switch (arg) {
 				case "-semantic":
 					onlySemantic = true;
 					break;
+				case "-test":
+					String name = "test1.mx";
+					input = new FileInputStream(name);
+					break;
 			}
 		}
-
-        /*String name = "test1.mx";
-        InputStream input = new FileInputStream(name);*/
-        InputStream input = System.in;
 
         try {
             RootNode ASTRoot;

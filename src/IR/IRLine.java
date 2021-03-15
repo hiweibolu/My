@@ -74,7 +74,7 @@ public class IRLine {
 	}
 
 	public String labelASM(){
-		return ".L" + String.valueOf(label);
+		return ".LAB" + String.valueOf(label);
 	}
 
 	public void printASM(IRBlock block){

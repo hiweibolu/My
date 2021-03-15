@@ -275,7 +275,7 @@ public class IRBlock {
 		
         lines.forEach(l -> l.printASM(this));
 
-		System.out.println(".L" + String.valueOf(returnLabel) + ":");
+		System.out.println(".LAB" + String.valueOf(returnLabel) + ":");
 		System.out.println("\tlw\ts0," + String.valueOf(realRAM - 4) + "(sp)");
 		if (containsCALL) System.out.println("\tlw\tra," + String.valueOf(realRAM - 8) + "(sp)");
 		System.out.println("\taddi\tsp,sp," + String.valueOf(realRAM));

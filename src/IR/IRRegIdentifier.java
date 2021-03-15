@@ -35,7 +35,7 @@ public class IRRegIdentifier{
 	}
 
 	public String toSASM(){
-		return ".LC" + String.valueOf(id);
+		return ".LS" + String.valueOf(id);
 	}
 
 	public String toASM(){
