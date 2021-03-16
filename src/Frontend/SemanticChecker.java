@@ -483,6 +483,7 @@ public class SemanticChecker implements ASTVisitor {
 		while (nowScope != null){
 			if (nowScope.containsVariable(it.name, false)){
 				it.type = nowScope.getTypeVariable(it.name, false);
+				it.regId = nowScope.getRegIdVariable(it.name, false);
 				it.left = true;
 				found = true;
 				break;

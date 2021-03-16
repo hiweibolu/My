@@ -154,10 +154,10 @@ public class IRBuilder implements ASTVisitor {
 			line.args.add(new IRRegIdentifier(10, 0, false));
 			line.args.add(it.value.regId);
 			currentBlock.lines.add(line);
-			line = new IRLine(lineType.JUMP);
-			line.label = currentBlock.returnLabel;
-			currentBlock.lines.add(line);
         }
+		IRLine line = new IRLine(lineType.JUMP);
+		line.label = currentBlock.returnLabel;
+		currentBlock.lines.add(line);
     }
 
     @Override
@@ -748,7 +748,7 @@ public class IRBuilder implements ASTVisitor {
 		Scope nowScope = it.scope;
 		while (nowScope != null){
 			if (nowScope.containsVariable(it.name, false)){
-				it.regId = nowScope.getRegIdVariable(it.name, false);
+				//it.regId = nowScope.getRegIdVariable(it.name, false);
 				break;
 			}
 			else if (nowScope.containsFunction(it.name, false)){

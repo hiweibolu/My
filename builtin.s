@@ -136,60 +136,79 @@ getString:
 	.globl	toString
 	.type	toString, @function
 toString:
-	addi	sp,sp,-48
-	sw	ra,44(sp)
-	sw	s0,40(sp)
-	addi	s0,sp,48
-	sw	a0,-36(s0)
-	lw	a5,-36(s0)
+	addi	sp,sp,-64
+	sw	ra,60(sp)
+	sw	s0,56(sp)
+	addi	s0,sp,64
+	sw	a0,-52(s0)
+	sw	zero,-20(s0)
+	lw	a5,-52(s0)
+	bge	a5,zero,.L10
+	lw	a5,-52(s0)
+	neg	a5,a5
+	sw	a5,-52(s0)
+	li	a5,1
 	sw	a5,-20(s0)
-	sw	zero,-24(s0)
 .L10:
-	lw	a4,-20(s0)
+	lw	a5,-52(s0)
+	sw	a5,-24(s0)
+	sw	zero,-28(s0)
+.L11:
+	lw	a4,-24(s0)
 	li	a5,10
 	div	a5,a4,a5
-	sw	a5,-20(s0)
-	lw	a5,-24(s0)
-	addi	a5,a5,1
 	sw	a5,-24(s0)
-	lw	a5,-20(s0)
-	bne	a5,zero,.L10
-	lw	a5,-24(s0)
+	lw	a5,-28(s0)
 	addi	a5,a5,1
+	sw	a5,-28(s0)
+	lw	a5,-24(s0)
+	bne	a5,zero,.L11
+	lw	a5,-28(s0)
+	addi	a4,a5,1
+	lw	a5,-20(s0)
+	add	a5,a4,a5
 	mv	a0,a5
 	call	malloc
 	mv	a5,a0
-	sw	a5,-32(s0)
-	lw	a5,-24(s0)
-	lw	a4,-32(s0)
+	sw	a5,-36(s0)
+	lw	a4,-28(s0)
+	lw	a5,-20(s0)
 	add	a5,a4,a5
-	sw	a5,-28(s0)
-	lw	a5,-28(s0)
-	addi	a4,a5,-1
-	sw	a4,-28(s0)
-	sb	zero,0(a5)
-.L11:
 	lw	a4,-36(s0)
+	add	a5,a4,a5
+	sw	a5,-32(s0)
+	lw	a5,-20(s0)
+	beq	a5,zero,.L12
+	lw	a5,-36(s0)
+	li	a4,45
+	sb	a4,0(a5)
+.L12:
+	lw	a5,-32(s0)
+	addi	a4,a5,-1
+	sw	a4,-32(s0)
+	sb	zero,0(a5)
+.L13:
+	lw	a4,-52(s0)
 	li	a5,10
 	rem	a5,a4,a5
 	andi	a4,a5,0xff
-	lw	a5,-28(s0)
+	lw	a5,-32(s0)
 	addi	a3,a5,-1
-	sw	a3,-28(s0)
+	sw	a3,-32(s0)
 	addi	a4,a4,48
 	andi	a4,a4,0xff
 	sb	a4,0(a5)
-	lw	a4,-36(s0)
+	lw	a4,-52(s0)
 	li	a5,10
 	div	a5,a4,a5
-	sw	a5,-36(s0)
+	sw	a5,-52(s0)
+	lw	a5,-52(s0)
+	bne	a5,zero,.L13
 	lw	a5,-36(s0)
-	bne	a5,zero,.L11
-	lw	a5,-32(s0)
 	mv	a0,a5
-	lw	ra,44(sp)
-	lw	s0,40(sp)
-	addi	sp,sp,48
+	lw	ra,60(sp)
+	lw	s0,56(sp)
+	addi	sp,sp,64
 	jr	ra
 	.size	toString, .-toString
 	.align	2

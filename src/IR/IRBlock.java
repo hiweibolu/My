@@ -99,8 +99,19 @@ public class IRBlock {
 					switch (regId.typ){
 						case 3:
 							if (regId.id < 6){
-								break;
+							}else{
+								temp = regIdAllocator.alloc(5);
+								line = new IRLine(lineType.SW);
+								line.args.add(temp);
+								IRRegIdentifier an_temp;
+								if (regIdAllocator.size(7) < regId.id - 5){
+									an_temp = regIdAllocator.alloc(7);
+								}else an_temp = new IRRegIdentifier(regId.id - 6, 7, false);
+								line.args.add(an_temp);
+								new_lines.add(line);
+								now_line.args.set(0, temp);
 							}
+							break;
 						case 6:
 							temp = regIdAllocator.alloc(5);
 							line = new IRLine(lineType.SW);

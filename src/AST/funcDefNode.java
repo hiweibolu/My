@@ -10,6 +10,7 @@ public class funcDefNode extends ASTNode {
     public String name;
 	public Type type;
 	public blockStmtNode block;
+	public boolean haveNoReturn = false;
 
     public funcDefNode(position pos, String name, Type type, blockStmtNode block) {
         super(pos);
