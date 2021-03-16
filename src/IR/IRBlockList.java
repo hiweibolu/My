@@ -1,12 +1,14 @@
 package IR;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class IRBlockList {
 
 	public ArrayList<IRBlock> blocks = new ArrayList<>();
 	public ArrayList<String> strings = new ArrayList<>();
     public ArrayList<Integer> globals = new ArrayList<>();
+    public HashMap<String, Integer> class_sizes = new HashMap<>();
 	public boolean haveNoReturn = false;
 
     public int addString(String s){

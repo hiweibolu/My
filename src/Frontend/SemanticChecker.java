@@ -100,6 +100,7 @@ public class SemanticChecker implements ASTVisitor {
 				}
 				
 				currentScope.defineFunction(it.name, it.type.getFuncType(), it.pos);
+				it.func_name = currentScope.getNameFunction(it.name, false);
 				ArrayList<Type> params = new ArrayList<>();
 				it.funcParams.forEach(p -> params.add(p.type));
 				currentScope.defineParams(it.name, params, it.pos);
@@ -111,6 +112,7 @@ public class SemanticChecker implements ASTVisitor {
 			currentScope = new Scope(currentScope);
 			currentScope.regIdAllocator = new RegIdAllocator();
 			it.scope = currentScope;
+			currentScope.defineVariable("!this", currentClass, it.pos, 1);
 
 			it.funcParams.forEach(p -> p.accept(this));
 			returnType = it.type;
@@ -146,6 +148,7 @@ public class SemanticChecker implements ASTVisitor {
 		if (inInit){
 			currentScope = new Scope(currentScope);
 			it.scope = currentScope;
+			currentScope.class_name = it.name;
 
 			constructDefined = false;
 			it.funcDefs.forEach(fd -> fd.accept(this));
@@ -198,6 +201,7 @@ public class SemanticChecker implements ASTVisitor {
 		}
         
 		if (gScope == currentScope) currentScope.defineVariable(it.name, it.type, it.pos, 2);
+		else if (currentClass != null && inVarInit) currentScope.defineVariable(it.name, it.type, it.pos, 11);
 		else currentScope.defineVariable(it.name, it.type, it.pos, 1);
     }
 

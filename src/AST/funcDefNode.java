@@ -7,7 +7,7 @@ import java.util.ArrayList;
 
 public class funcDefNode extends ASTNode {
     public ArrayList<funcParamNode> funcParams = new ArrayList<>();
-    public String name;
+    public String name, func_name;
 	public Type type;
 	public blockStmtNode block;
 	public boolean haveNoReturn = false;

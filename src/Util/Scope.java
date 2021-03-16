@@ -13,18 +13,22 @@ public class Scope {
 
     public RegIdAllocator regIdAllocator;
 
-    private HashMap<String, Type> variables;
+    public HashMap<String, Type> variables;
+    private HashMap<String, Integer> variable_ids;
     private HashMap<String, IRRegIdentifier> variablesRegId;
 	private HashMap<String, Type> functions;
 	private HashMap<String, String> function_names;
 	private HashMap<String, ArrayList<Type> > params;
     private Scope parentScope;
 
+	public int id_num;
 	public String class_name = null;
 
     public Scope(Scope parentScope) {
         this.parentScope = parentScope;
 		variables = new HashMap<>();
+		variable_ids = new HashMap<>();
+		id_num = 0;
         variablesRegId = new HashMap<>();
 		functions = new HashMap<>();
 		function_names = new HashMap<>();
@@ -41,6 +45,7 @@ public class Scope {
         if (variables.containsKey(name))
             throw new semanticError("Variables redefine", pos);
         variables.put(name, t);
+		variable_ids.put(name, id_num++);
 		IRRegIdentifier result = regIdAllocator.alloc(typ);
         variablesRegId.put(name, result);
 		return result;
@@ -57,6 +62,12 @@ public class Scope {
             return parentScope.getTypeVariable(name, true);
         return null;
     }
+    public int getIdVariable(String name, boolean lookUpon) {
+        if (variable_ids.containsKey(name)) return variable_ids.get(name);
+        else if (parentScope != null && lookUpon)
+            return parentScope.getIdVariable(name, true);
+        return 0;
+    }
     public IRRegIdentifier getRegIdVariable(String name, boolean lookUpon) {
         if (variablesRegId.containsKey(name)) return variablesRegId.get(name);
         else if (parentScope != null && lookUpon)
@@ -71,6 +82,8 @@ public class Scope {
 		if (class_name != null){
 			if (class_name.equals("!array")) function_names.put(name, "my_array_size");
 			else function_names.put(name, "my_c_" + class_name + "_" + name);
+		}else{
+			function_names.put(name, name);
 		}
     }
     public boolean containsFunction(String name, boolean lookUpon) {

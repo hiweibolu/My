@@ -14,7 +14,6 @@ public class globalScope extends Scope {
         if (scopes.containsKey(name))
             throw new semanticError("Multiple definition of " + name, pos);
         scopes.put(name, t);
-		t.class_name = name;
     }
 	public boolean containsType(String name){
 		return scopes.containsKey(name);
@@ -22,5 +21,8 @@ public class globalScope extends Scope {
     public Scope getScopeFromName(String name, position pos) {
         if (scopes.containsKey(name)) return scopes.get(name);
         throw new semanticError("No such type: " + name, pos);
+    }
+    public Scope getScopeFromName(String name) {
+        return scopes.get(name);
     }
 }

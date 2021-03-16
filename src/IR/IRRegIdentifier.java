@@ -27,6 +27,7 @@ public class IRRegIdentifier{
 			case 8: System.out.print("i"); break;
 			case 9: System.out.print("S"); break;
 			case 10: System.out.print("Q"); break;
+			case 11: System.out.print("C"); break;
 		}
 		System.out.print(id);
 	}

@@ -59,35 +59,52 @@ public class IRBuilder implements ASTVisitor {
 	@Override
     public void visit(funcDefNode it) {
 		currentBlock = new IRBlock();
-		currentBlock.name = it.name;
+		currentBlock.name = it.func_name;
 		currentBlock.regIdAllocator = it.scope.regIdAllocator;
 		currentBlock.returnLabel = labelAlloc();
 		gBList.blocks.add(currentBlock);
 		IRLine line = new IRLine(lineType.FUNC);
-		line.func = it.name;
+		line.func = it.func_name;
 		currentBlock.lines.add(line);
 
-		for (int i = 0; i < it.funcParams.size(); i++){
-			line =  new IRLine(lineType.MOVE);
-			line.args.add(it.funcParams.get(i).regId);
-			if (i < 6) line.args.add(new IRRegIdentifier(i + 10, 0, false));
-			else line.args.add(new IRRegIdentifier(i - 6, 4, false));
-			currentBlock.lines.add(line);
-		}
+		if (currentClass == null){
+			for (int i = 0; i < it.funcParams.size(); i++){
+				line =  new IRLine(lineType.MOVE);
+				line.args.add(it.funcParams.get(i).regId);
+				if (i < 6) line.args.add(new IRRegIdentifier(i + 10, 0, false));
+				else line.args.add(new IRRegIdentifier(i - 6, 4, false));
+				currentBlock.lines.add(line);
+			}
 
-		inMainInit = true;
-		if (it.name.equals("main")) gVarDefs.forEach(d -> d.accept(this));
+			inMainInit = true;
+			if (it.name.equals("main")) gVarDefs.forEach(d -> d.accept(this));
 
-		it.block.accept(this);
+			it.block.accept(this);
 
-		if (it.name.equals("main") && gBList.haveNoReturn){
+			if (it.name.equals("main") && gBList.haveNoReturn){
+				line = new IRLine(lineType.MOVE);
+				line.args.add(new IRRegIdentifier(10, 0, false));
+				line.args.add(new IRRegIdentifier(0, 0, false));
+				currentBlock.lines.add(line);
+				line = new IRLine(lineType.JUMP);
+				line.label = currentBlock.returnLabel;
+				currentBlock.lines.add(line);
+			}
+		} else {
+			IRRegIdentifier this_reg = new IRRegIdentifier(0, 1, false);
 			line = new IRLine(lineType.MOVE);
+			line.args.add(this_reg);
 			line.args.add(new IRRegIdentifier(10, 0, false));
-			line.args.add(new IRRegIdentifier(0, 0, false));
 			currentBlock.lines.add(line);
-			line = new IRLine(lineType.JUMP);
-			line.label = currentBlock.returnLabel;
-			currentBlock.lines.add(line);
+
+			for (int i = 0; i < it.funcParams.size(); i++){
+				line = new IRLine(lineType.MOVE);
+				line.args.add(it.funcParams.get(i).regId);
+				if (i + 1 < 6) line.args.add(new IRRegIdentifier(i + 1 + 10, 0, false));
+				else line.args.add(new IRRegIdentifier(i + 1 - 6, 4, false));
+				currentBlock.lines.add(line);
+			}
+			it.block.accept(this);
 		}
     }
 	
@@ -97,30 +114,9 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(classDefNode it) {
-		
-		if (it.name.equals("main")) 
-			throw new semanticError("Class named main. ", it.pos);
+		gBList.class_sizes.put(it.name, it.scope.variables.size());
 		currentClass = new Type(it.name);
-		
-		if (inInit){
-			currentScope = new Scope(currentScope);
-			constructDefined = false;
-			//inInit = true;
-			it.funcDefs.forEach(fd -> fd.accept(this));
-			//inInit = false;
-			gScope.addType(it.name, currentScope, it.pos);
-		}
-		else if (inVarInit)
-		{
-			currentScope = gScope.getScopeFromName(it.name, it.pos);
-			it.varDefs.forEach(vd -> vd.accept(this));
-		}
-		else {
-			currentScope = gScope.getScopeFromName(it.name, it.pos);
-			it.funcDefs.forEach(fd -> fd.accept(this));
-		}
-		
-		currentScope = gScope;
+		it.funcDefs.forEach(fd -> fd.accept(this));		
 		currentClass = null;
     }
 
@@ -636,12 +632,47 @@ public class IRBuilder implements ASTVisitor {
 		it.hs.accept(this);
 		it.member.pRegId = it.hs.regId;
 		it.member.accept(this);
-		it.regId = it.member.regId;
+		if (it.member.inClass){
+			IRRegIdentifier regId = currentBlock.regIdAllocator.alloc(5);
+			IRLine line = new IRLine(lineType.INDEX);
+			line.args.add(regId);
+			line.args.add(it.hs.regId);
+			line.args.add(it.member.regId);
+			currentBlock.lines.add(line);
+
+			it.regId = new IRRegIdentifier(regId.id, regId.typ, true);
+		}else{
+			it.regId = it.hs.regId;
+		}
 	}
 
 	public IRRegIdentifier newMalloc(newExprNode it, int i){
 		if (i >= it.Exprs.size()){
-			return new IRRegIdentifier(0, 0, false);
+			if (it.type.isClass()){
+				IRLine line = new IRLine(lineType.LOAD);
+				line.args.add(new IRRegIdentifier(10, 0, false));
+				line.args.add(new IRRegIdentifier(gBList.class_sizes.get(it.type.name) << 2, 8, false));
+				currentBlock.lines.add(line);
+				
+				line = new IRLine(lineType.CALL);
+				line.func = "malloc";
+				currentBlock.lines.add(line);
+
+				IRRegIdentifier nowRegId = currentBlock.regIdAllocator.alloc(5);
+				line = new IRLine(lineType.MOVE);
+				line.args.add(nowRegId);
+				line.args.add(new IRRegIdentifier(10, 0, false));
+				currentBlock.lines.add(line);
+
+				Scope temp_scope = gScope.getScopeFromName(it.type.name);
+				if (temp_scope.containsFunction(it.type.name, false)){
+
+					line = new IRLine(lineType.CALL);
+					line.func = "my_c_" + it.type.name + "_" + it.type.name;
+					currentBlock.lines.add(line);
+				};
+				return nowRegId;
+			}else return new IRRegIdentifier(0, 0, false);
 		}
 		IRRegIdentifier nowRegId = currentBlock.regIdAllocator.alloc(1);
 		IRLine line = new IRLine(lineType.MOVE);
@@ -740,7 +771,7 @@ public class IRBuilder implements ASTVisitor {
 
 	@Override
     public void visit(thisExprNode it) {
-		it.type = currentClass;
+		it.regId = new IRRegIdentifier(0, 1, false);
     }
 
     @Override
@@ -748,6 +779,31 @@ public class IRBuilder implements ASTVisitor {
 		Scope nowScope = it.scope;
 		while (nowScope != null){
 			if (nowScope.containsVariable(it.name, false)){
+				if (it.pRegId != null){
+					it.regId = currentBlock.regIdAllocator.alloc(5);
+					IRLine line = new IRLine(lineType.LOAD);
+					line.args.add(it.regId);
+					line.args.add(new IRRegIdentifier(nowScope.getIdVariable(it.name, false), 8, false));
+					currentBlock.lines.add(line);
+					it.inClass = true;
+				} else{
+					if (it.regId.typ == 11){
+						IRRegIdentifier temp = currentBlock.regIdAllocator.alloc(5);
+						IRLine line = new IRLine(lineType.LOAD);
+						line.args.add(temp);
+						line.args.add(new IRRegIdentifier(it.regId.id, 8, false));
+						currentBlock.lines.add(line);
+
+						IRRegIdentifier regId = currentBlock.regIdAllocator.alloc(5);
+						line = new IRLine(lineType.INDEX);
+						line.args.add(regId);
+						line.args.add(new IRRegIdentifier(0, 1, false));
+						line.args.add(temp);
+						currentBlock.lines.add(line);
+
+						it.regId = new IRRegIdentifier(regId.id, regId.typ, true);
+					}
+				}
 				//it.regId = nowScope.getRegIdVariable(it.name, false);
 				break;
 			}

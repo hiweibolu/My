@@ -10,6 +10,7 @@ abstract public class ASTNode {
     public IRRegIdentifier regId, pRegId;
     public Scope scope;
     public int literal = 0;
+	public boolean inClass = false;
 
     public ASTNode(position pos) {
         this.pos = pos;
