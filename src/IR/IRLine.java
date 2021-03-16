@@ -6,7 +6,7 @@ public class IRLine {
 
     public enum lineType{
 		FUNC, LABEL, MOVE, JUMP, CALL,
-		BNEQ,
+		BNEQ, BEQ,
 		NEG, NOT, LOGICNOT,
 		EQ, NEQ, GE, GEQ, LE, LEQ,
 		ADD, SUB, MUL, DIV, MOD,
@@ -30,6 +30,7 @@ public class IRLine {
 			case JUMP: System.out.print("\tJUMP"); break;
 			case CALL: System.out.print("\tCALL"); break;
 			case BNEQ: System.out.print("\tBNEQ"); break;
+			case BEQ: System.out.print("\tBEQ"); break;
 			case NEG: System.out.print("\tNEG"); break;
 			case NOT: System.out.print("\tNOT"); break;
 			case LOGICNOT: System.out.print("\tLOGICNOT"); break;
@@ -96,6 +97,12 @@ public class IRLine {
 				break;
 			case BNEQ:
 				System.out.print("\tbeq\t");
+				System.out.print(args.get(0).toASM() + ",");
+				System.out.print(args.get(1).toASM() + ",");
+				System.out.println(labelASM());
+				break;
+			case BEQ:
+				System.out.print("\tbne\t");
 				System.out.print(args.get(0).toASM() + ",");
 				System.out.print(args.get(1).toASM() + ",");
 				System.out.println(labelASM());
@@ -235,6 +242,7 @@ public class IRLine {
 				System.out.print(args.get(1).toASM() + ",");
 				System.out.println(args.get(2).toASM());
 				break;
+			case LOADSTRING:
 			case LOAD:
 				switch (args.get(1).typ){
 					case 2:
@@ -268,7 +276,6 @@ public class IRLine {
 						break;
 				}
 				break;
-			case LOADSTRING: System.out.print("\tLOADSTRING"); break;
 			case RETURN: System.out.print("\tRETURN"); break;
 			case ADDI:
 				System.out.print("\taddi\t");

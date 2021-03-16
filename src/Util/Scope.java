@@ -16,14 +16,18 @@ public class Scope {
     private HashMap<String, Type> variables;
     private HashMap<String, IRRegIdentifier> variablesRegId;
 	private HashMap<String, Type> functions;
+	private HashMap<String, String> function_names;
 	private HashMap<String, ArrayList<Type> > params;
     private Scope parentScope;
+
+	public String class_name = null;
 
     public Scope(Scope parentScope) {
         this.parentScope = parentScope;
 		variables = new HashMap<>();
         variablesRegId = new HashMap<>();
 		functions = new HashMap<>();
+		function_names = new HashMap<>();
 		params = new HashMap<>();
         if (parentScope != null) regIdAllocator = parentScope.regIdAllocator;
         else regIdAllocator = null;
@@ -64,6 +68,10 @@ public class Scope {
         if (functions.containsKey(name))
             throw new semanticError("Functions redefine", pos);
         functions.put(name, t);
+		if (class_name != null){
+			if (class_name.equals("!array")) function_names.put(name, "my_array_size");
+			else function_names.put(name, "my_c_" + class_name + "_" + name);
+		}
     }
     public boolean containsFunction(String name, boolean lookUpon) {
         if (functions.containsKey(name)) return true;
@@ -75,6 +83,13 @@ public class Scope {
         if (functions.containsKey(name)) return functions.get(name);
         else if (parentScope != null && lookUpon)
             return parentScope.getTypeFunction(name, true);
+        return null;
+    }
+    
+    public String getNameFunction(String name, boolean lookUpon) {
+        if (function_names.containsKey(name)) return function_names.get(name);
+        else if (parentScope != null && lookUpon)
+            return parentScope.getNameFunction(name, true);
         return null;
     }
 	

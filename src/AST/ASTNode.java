@@ -7,7 +7,7 @@ import IR.IRRegIdentifier;
 abstract public class ASTNode {
     public position pos;
 
-    public IRRegIdentifier regId;
+    public IRRegIdentifier regId, pRegId;
     public Scope scope;
     public int literal = 0;
 

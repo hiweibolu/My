@@ -196,21 +196,26 @@ toString:
 	.globl	my_array_alloc
 	.type	my_array_alloc, @function
 my_array_alloc:
-	addi	sp,sp,-32
-	sw	ra,28(sp)
-	sw	s0,24(sp)
-	addi	s0,sp,32
-	sw	a0,-20(s0)
-	lw	a5,-20(s0)
+	addi	sp,sp,-48
+	sw	ra,44(sp)
+	sw	s0,40(sp)
+	addi	s0,sp,48
+	sw	a0,-36(s0)
+	lw	a5,-36(s0)
 	addi	a5,a5,1
 	slli	a5,a5,2
 	mv	a0,a5
 	call	malloc
 	mv	a5,a0
+	sw	a5,-20(s0)
+	lw	a5,-20(s0)
+	lw	a4,-36(s0)
+	sw	a4,0(a5)
+	lw	a5,-20(s0)
 	mv	a0,a5
-	lw	ra,28(sp)
-	lw	s0,24(sp)
-	addi	sp,sp,32
+	lw	ra,44(sp)
+	lw	s0,40(sp)
+	addi	sp,sp,48
 	jr	ra
 	.size	my_array_alloc, .-my_array_alloc
 	.align	2
@@ -229,9 +234,9 @@ my_array_size:
 	jr	ra
 	.size	my_array_size, .-my_array_size
 	.align	2
-	.globl	my_string_substring
-	.type	my_string_substring, @function
-my_string_substring:
+	.globl	my_c_string_substring
+	.type	my_c_string_substring, @function
+my_c_string_substring:
 	addi	sp,sp,-48
 	sw	ra,44(sp)
 	sw	s0,40(sp)
@@ -270,11 +275,11 @@ my_string_substring:
 	lw	s0,40(sp)
 	addi	sp,sp,48
 	jr	ra
-	.size	my_string_substring, .-my_string_substring
+	.size	my_c_string_substring, .-my_c_string_substring
 	.align	2
-	.globl	my_string_parseInt
-	.type	my_string_parseInt, @function
-my_string_parseInt:
+	.globl	my_c_string_parseInt
+	.type	my_c_string_parseInt, @function
+my_c_string_parseInt:
 	addi	sp,sp,-48
 	sw	ra,44(sp)
 	sw	s0,40(sp)
@@ -292,11 +297,11 @@ my_string_parseInt:
 	lw	s0,40(sp)
 	addi	sp,sp,48
 	jr	ra
-	.size	my_string_parseInt, .-my_string_parseInt
+	.size	my_c_string_parseInt, .-my_c_string_parseInt
 	.align	2
-	.globl	my_string_ord
-	.type	my_string_ord, @function
-my_string_ord:
+	.globl	my_c_string_ord
+	.type	my_c_string_ord, @function
+my_c_string_ord:
 	addi	sp,sp,-32
 	sw	s0,28(sp)
 	addi	s0,sp,32
@@ -310,11 +315,11 @@ my_string_ord:
 	lw	s0,28(sp)
 	addi	sp,sp,32
 	jr	ra
-	.size	my_string_ord, .-my_string_ord
+	.size	my_c_string_ord, .-my_c_string_ord
 	.align	2
-	.globl	my_string_length
-	.type	my_string_length, @function
-my_string_length:
+	.globl	my_c_string_length
+	.type	my_c_string_length, @function
+my_c_string_length:
 	addi	sp,sp,-32
 	sw	ra,28(sp)
 	sw	s0,24(sp)
@@ -328,7 +333,7 @@ my_string_length:
 	lw	s0,24(sp)
 	addi	sp,sp,32
 	jr	ra
-	.size	my_string_length, .-my_string_length
+	.size	my_c_string_length, .-my_c_string_length
 	.align	2
 	.globl	my_string_plus
 	.type	my_string_plus, @function

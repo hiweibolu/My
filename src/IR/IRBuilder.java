@@ -297,21 +297,28 @@ public class IRBuilder implements ASTVisitor {
 			currentBlock.maxParamsNumber = it.Params.size() - 1;
 
 		it.Params.forEach(p -> p.accept(this));
-		
+		ExprNode func = it.Params.get(0);
+
+		int have_ptr = 0;
+		if (func.parent != null) have_ptr = 1;
 		if (it.Params.size() > 0){
 			for (int i = it.Params.size() - 1; i > 0; i--){
 				IRLine line = new IRLine(lineType.MOVE);
-				line.args.add(new IRRegIdentifier(i - 1, 3, false));
+				line.args.add(new IRRegIdentifier(i - 1 + have_ptr, 3, false));
 				line.args.add(it.Params.get(i).regId);
 				currentBlock.lines.add(line);
 			}
 		}
+
+		if (have_ptr == 1){
+			IRLine line = new IRLine(lineType.MOVE);
+			line.args.add(new IRRegIdentifier(0, 3, false));
+			line.args.add(it.Params.get(0).regId);
+			currentBlock.lines.add(line);
+		}
 		IRLine line = new IRLine(lineType.CALL);
-		line.func = it.Params.get(0).funcName;
-		/*for (int i = 2; i < it.Params.size(); i++){
-			if (i > 6) break;
-			line.args.add(new IRRegIdentifier(i + 9, 0, false));
-		}*/
+		if (have_ptr == 0) line.func = it.Params.get(0).funcName;
+		else line.func = it.scope.getNameFunction(it.Params.get(0).funcName, false);
 		currentBlock.lines.add(line);
 
 		it.regId = currentBlock.regIdAllocator.alloc(5);
@@ -379,6 +386,7 @@ public class IRBuilder implements ASTVisitor {
 				line.args.add(it.regId);
 				line.args.add(it.regId);
 				line.args.add(new IRRegIdentifier(1, 8, false));
+				currentBlock.lines.add(line);
 				break;
 			case subsub:
 				it.regId = it.hs.regId;
@@ -416,10 +424,136 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(binaryExprNode it) {
-        it.lhs.accept(this);
-        it.rhs.accept(this);
 		it.regId = currentBlock.regIdAllocator.alloc(5);
 		IRLine line = null;
+		switch (it.opCode){// short-circuit
+			case andand:
+				int short_circuit = labelAlloc(), expr_end = labelAlloc();
+
+				it.lhs.accept(this);
+				line = new IRLine(lineType.BNEQ);
+				line.args.add(it.lhs.regId);
+				line.args.add(new IRRegIdentifier(0, 0, false));
+				line.label = short_circuit;
+				currentBlock.lines.add(line);
+
+				it.rhs.accept(this);
+				line = new IRLine(lineType.BNEQ);
+				line.args.add(it.rhs.regId);
+				line.args.add(new IRRegIdentifier(0, 0, false));
+				line.label = short_circuit;
+				currentBlock.lines.add(line);
+
+				line = new IRLine(lineType.LOAD);
+				line.args.add(it.regId);
+				line.args.add(new IRRegIdentifier(1, 8, false));
+				currentBlock.lines.add(line);
+				line = new IRLine(lineType.JUMP);
+				line.label = expr_end;
+				currentBlock.lines.add(line);
+				line = new IRLine(lineType.LABEL);
+				line.label = short_circuit;
+				currentBlock.lines.add(line);
+				line = new IRLine(lineType.LOAD);
+				line.args.add(it.regId);
+				line.args.add(new IRRegIdentifier(0, 8, false));
+				currentBlock.lines.add(line);
+				line = new IRLine(lineType.LABEL);
+				line.label = expr_end;
+				currentBlock.lines.add(line);
+				return;
+			case oror:
+				short_circuit = labelAlloc();
+				expr_end = labelAlloc();
+
+				it.lhs.accept(this);
+				line = new IRLine(lineType.BEQ);
+				line.args.add(it.lhs.regId);
+				line.args.add(new IRRegIdentifier(0, 0, false));
+				line.label = short_circuit;
+				currentBlock.lines.add(line);
+
+				it.rhs.accept(this);
+				line = new IRLine(lineType.BEQ);
+				line.args.add(it.rhs.regId);
+				line.args.add(new IRRegIdentifier(0, 0, false));
+				line.label = short_circuit;
+				currentBlock.lines.add(line);
+				
+				line = new IRLine(lineType.LOAD);
+				line.args.add(it.regId);
+				line.args.add(new IRRegIdentifier(0, 8, false));
+				currentBlock.lines.add(line);
+				line = new IRLine(lineType.JUMP);
+				line.label = expr_end;
+				currentBlock.lines.add(line);
+				line = new IRLine(lineType.LABEL);
+				line.label = short_circuit;
+				currentBlock.lines.add(line);
+				line = new IRLine(lineType.LOAD);
+				line.args.add(it.regId);
+				line.args.add(new IRRegIdentifier(1, 8, false));
+				currentBlock.lines.add(line);
+				line = new IRLine(lineType.LABEL);
+				line.label = expr_end;
+				currentBlock.lines.add(line);
+
+				return;
+		}
+        it.lhs.accept(this);
+        it.rhs.accept(this);
+		if (it.lhs.type.isString() && it.rhs.type.isString()){
+			line = new IRLine(lineType.MOVE);
+			line.args.add(new IRRegIdentifier(1, 3, false));
+			line.args.add(it.rhs.regId);
+			currentBlock.lines.add(line);
+			line = new IRLine(lineType.MOVE);
+			line.args.add(new IRRegIdentifier(0, 3, false));
+			line.args.add(it.lhs.regId);
+			currentBlock.lines.add(line);
+			switch (it.opCode){
+				case eq:
+					line = new IRLine(lineType.CALL);
+					line.func = "my_string_eq";
+					currentBlock.lines.add(line);
+					break;
+				case neq:
+					line = new IRLine(lineType.CALL);
+					line.func = "my_string_neq";
+					currentBlock.lines.add(line);
+					break;
+				case ge:
+					line = new IRLine(lineType.CALL);
+					line.func = "my_string_ge";
+					currentBlock.lines.add(line);
+					break;
+				case geq:
+					line = new IRLine(lineType.CALL);
+					line.func = "my_string_geq";
+					currentBlock.lines.add(line);
+					break;
+				case le:
+					line = new IRLine(lineType.CALL);
+					line.func = "my_string_le";
+					currentBlock.lines.add(line);
+					break;
+				case leq:
+					line = new IRLine(lineType.CALL);
+					line.func = "my_string_leq";
+					currentBlock.lines.add(line);
+					break;
+				case add:
+					line = new IRLine(lineType.CALL);
+					line.func = "my_string_plus";
+					currentBlock.lines.add(line);
+					break;
+			}
+			line = new IRLine(lineType.MOVE);
+			line.args.add(it.regId);
+			line.args.add(new IRRegIdentifier(10, 0, false));
+			currentBlock.lines.add(line);
+			return;
+		}
 		switch (it.opCode){
 			case eq:
 				line = new IRLine(lineType.EQ);
@@ -443,11 +577,11 @@ public class IRBuilder implements ASTVisitor {
 				line = new IRLine(lineType.ADD);
 				break;
 			case or:
-			case oror:
+			//case oror:
 				line = new IRLine(lineType.OR);
 				break;
 			case and:
-			case andand:
+			//case andand:
 				line = new IRLine(lineType.AND);
 				break;
 			case sub:
@@ -500,22 +634,9 @@ public class IRBuilder implements ASTVisitor {
 	@Override
     public void visit(memberExprNode it) {
 		it.hs.accept(this);
-		Scope tempScope = currentScope;
-		//System.out.println(it.hs.type.name);
-		if (it.hs.type.dimension > 0){
-			currentScope = gScope.getScopeFromName("!array", it.pos);
-		}else currentScope = gScope.getScopeFromName(it.hs.type.name, it.pos);
-		notInClass = false;
-		
+		it.member.pRegId = it.hs.regId;
 		it.member.accept(this);
-		notInClass = true;
-		
-		currentScope = tempScope;
-		it.type = it.member.type;
-		it.funcName = it.member.funcName;
-		if (it.hs.type.dimension > 0) it.parent = new Type("!array");
-		else it.parent = it.hs.type;
-		it.left = it.member.left;
+		it.regId = it.member.regId;
 	}
 
 	public IRRegIdentifier newMalloc(newExprNode it, int i){
@@ -631,6 +752,9 @@ public class IRBuilder implements ASTVisitor {
 				break;
 			}
 			else if (nowScope.containsFunction(it.name, false)){
+				if (it.pRegId != null){
+					it.regId = it.pRegId;
+				}
 				/*it.type = nowScope.getTypeFunction(it.name, false);
 				it.funcName = it.name;
 				found = true;*/

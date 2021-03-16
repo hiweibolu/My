@@ -30,10 +30,11 @@ public class IRBlock {
 			boolean no_need_add = false;
 			switch (now_line.lineCode){
 				default:
-				case SW:
+				case LW:
 					j = 1;
 				case BNEQ:
-				case LW:
+				case BEQ:
+				case SW:
 					for (; j < now_line.args.size(); j++){
 						IRRegIdentifier regId = now_line.args.get(j);
 						IRLine line;
@@ -70,17 +71,13 @@ public class IRBlock {
 								now_line.args.set(j, temp);
 								break;
 							case 9:
-								temp = regIdAllocator.alloc(5);
+								/*temp = regIdAllocator.alloc(5);
 								line = new IRLine(lineType.LOAD);
 								line.args.add(temp);
 								line.args.add(regId);
 								new_lines.add(line);
-								/*line = new IRLine(lineType.ADDI);
-								line.args.add(temp);
-								line.args.add(regId);
-								new_lines.add(line);*/
 								now_line.args.set(j, temp);
-								no_need_add = true;
+								no_need_add = true;*/
 						}
 					}
 					break;
@@ -95,7 +92,7 @@ public class IRBlock {
 			if (!no_need_add) new_lines.add(now_line);
 			switch (now_line.lineCode){
 				default:
-				case SW:
+				case LW:
 					IRRegIdentifier regId = now_line.args.get(0);
 					IRLine line;
 					IRRegIdentifier temp, temp2;
@@ -137,12 +134,13 @@ public class IRBlock {
 							break;
 					}
 				case BNEQ:
+				case BEQ:
 				case FUNC:
 				case LABEL:
 				case JUMP:
 				case CALL:
 				case RETURN:
-				case LW:
+				case SW:
 			}
 		}
 		lines = new_lines;
@@ -155,10 +153,11 @@ public class IRBlock {
 			int j = 0;
 			switch (now_line.lineCode){
 				default:
-				case SW:
+				case LW:
 					j = 1;
 				case BNEQ:
-				case LW:
+				case BEQ:
+				case SW:
 					for (; j < now_line.args.size(); j++){
 						IRRegIdentifier regId = now_line.args.get(j);
 						IRLine line;
@@ -185,7 +184,7 @@ public class IRBlock {
 			new_lines.add(now_line);
 			switch (now_line.lineCode){
 				default:
-				case SW:
+				case LW:
 					IRRegIdentifier regId = now_line.args.get(0);
 					IRLine line;
 					IRRegIdentifier temp;
@@ -201,12 +200,13 @@ public class IRBlock {
 							break;
 					}
 				case BNEQ:
+				case BEQ:
 				case FUNC:
 				case LABEL:
 				case JUMP:
 				case CALL:
 				case RETURN:
-				case LW:
+				case SW:
 			}
 		}
 		lines = new_lines;
@@ -292,6 +292,7 @@ public class IRBlock {
 					}
 					break;
 				case BNEQ:
+				case BEQ:
 				case SW:
 					easyAlloc(now_line, 0, now_line.args.size());
 					easyRelease(now_line, 0, now_line.args.size());
@@ -345,6 +346,7 @@ public class IRBlock {
 					easyRelease(now_line, 0, 1);
 					break;
 				case BNEQ:
+				case BEQ:
 				case SW:
 					easyAlloc(now_line, 0, now_line.args.size());
 					easyRelease(now_line, 0, now_line.args.size());

@@ -314,12 +314,11 @@ public class SemanticChecker implements ASTVisitor {
 		ExprNode func = it.Params.get(0);
 		if (!func.type.isFunc)
 			throw new semanticError("callFunc : it is not a function. ", it.pos);
-		it.scope = currentScope;
 		
 		Scope tempScope = currentScope;
 		if (func.parent != null)
 			currentScope = gScope.getScopeFromName(func.parent.name, it.pos);
-
+		it.scope = currentScope;
 		
 		ArrayList<Type> tList = currentScope.getParams(func.funcName, true);
 		if (it.Params.size() - 1 != tList.size())
