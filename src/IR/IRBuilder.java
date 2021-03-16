@@ -25,7 +25,7 @@ public class IRBuilder implements ASTVisitor {
     private IRBlockList gBList;
 	private IRBlock currentBlock;
 	private int labelNumber = 0;
-	private int loopStart = 0, loopEnd = 0;
+	private int loopStart = 0, loopEnd = 0, loopCont = 0;
 	private int ifElse = 0, ifEnd = 0;
 
 	private ArrayList<ASTNode> gVarDefs;
@@ -177,15 +177,16 @@ public class IRBuilder implements ASTVisitor {
 	@Override
     public void visit(continueStmtNode it) {
 		IRLine line = new IRLine(lineType.JUMP);
-		line.label = loopStart;
+		line.label = loopCont;
 		currentBlock.lines.add(line);
     }
 
 	@Override
     public void visit(whileStmtNode it) {
 		int oldLoopStart = loopStart, oldLoopEnd = loopEnd;
+		int oldLoopCont = loopCont;
 		loopStart = labelAlloc();
-		loopEnd = labelAlloc();
+		loopCont = loopEnd = labelAlloc();
 
 		IRLine line = new IRLine(lineType.LABEL);
 		line.label = loopStart;
@@ -210,6 +211,7 @@ public class IRBuilder implements ASTVisitor {
 		line.label = loopEnd;
 		currentBlock.lines.add(line);
 
+		loopCont = oldLoopCont;
 		loopStart = oldLoopStart;
 		loopEnd = oldLoopEnd;
     }
@@ -256,8 +258,10 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(forStmtNode it) {
 		int oldLoopStart = loopStart, oldLoopEnd = loopEnd;
+		int oldLoopCont = loopCont;
 		loopStart = labelAlloc();
 		loopEnd = labelAlloc();
+		loopCont = labelAlloc();
 
         if (it.init != null) it.init.accept(this);
 		IRLine line = new IRLine(lineType.LABEL);
@@ -274,6 +278,9 @@ public class IRBuilder implements ASTVisitor {
 			currentBlock.lines.add(line);
 		}
 		if (it.Stmt != null) it.Stmt.accept(this);
+		line = new IRLine(lineType.LABEL);
+		line.label = loopCont;
+		currentBlock.lines.add(line);
         if (it.incr != null) it.incr.accept(this);
 		
 		line = new IRLine(lineType.JUMP);
@@ -285,6 +292,7 @@ public class IRBuilder implements ASTVisitor {
 
 		loopStart = oldLoopStart;
 		loopEnd = oldLoopEnd;
+		loopCont = oldLoopCont;
     }
 
     @Override
@@ -295,8 +303,8 @@ public class IRBuilder implements ASTVisitor {
 		it.Params.forEach(p -> p.accept(this));
 		ExprNode func = it.Params.get(0);
 
-		int have_ptr = 0;
-		if (func.parent != null) have_ptr = 1;
+		int have_ptr = it.scope.getInClassFunction(func.funcName, true);
+		//if (func.parent != null) have_ptr = 1;
 		if (it.Params.size() > 0){
 			for (int i = it.Params.size() - 1; i > 0; i--){
 				IRLine line = new IRLine(lineType.MOVE);
@@ -307,14 +315,21 @@ public class IRBuilder implements ASTVisitor {
 		}
 
 		if (have_ptr == 1){
-			IRLine line = new IRLine(lineType.MOVE);
-			line.args.add(new IRRegIdentifier(0, 3, false));
-			line.args.add(it.Params.get(0).regId);
-			currentBlock.lines.add(line);
+			if (func.parent != null){
+				IRLine line = new IRLine(lineType.MOVE);
+				line.args.add(new IRRegIdentifier(0, 3, false));
+				line.args.add(it.Params.get(0).regId);
+				currentBlock.lines.add(line);
+			}else{
+				IRLine line = new IRLine(lineType.MOVE);
+				line.args.add(new IRRegIdentifier(0, 3, false));
+				line.args.add(new IRRegIdentifier(0, 1, false));
+				currentBlock.lines.add(line);
+			}
 		}
 		IRLine line = new IRLine(lineType.CALL);
 		if (have_ptr == 0) line.func = it.Params.get(0).funcName;
-		else line.func = it.scope.getNameFunction(it.Params.get(0).funcName, false);
+		else line.func = it.scope.getNameFunction(it.Params.get(0).funcName, true);
 		currentBlock.lines.add(line);
 
 		it.regId = currentBlock.regIdAllocator.alloc(5);

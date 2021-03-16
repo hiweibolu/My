@@ -18,6 +18,7 @@ public class Scope {
     private HashMap<String, IRRegIdentifier> variablesRegId;
 	private HashMap<String, Type> functions;
 	private HashMap<String, String> function_names;
+	private HashMap<String, Integer> function_inclasses = new HashMap<>();
 	private HashMap<String, ArrayList<Type> > params;
     private Scope parentScope;
 
@@ -82,8 +83,10 @@ public class Scope {
 		if (class_name != null){
 			if (class_name.equals("!array")) function_names.put(name, "my_array_size");
 			else function_names.put(name, "my_c_" + class_name + "_" + name);
+			function_inclasses.put(name, 1);
 		}else{
 			function_names.put(name, name);
+			function_inclasses.put(name, 0);
 		}
     }
     public boolean containsFunction(String name, boolean lookUpon) {
@@ -96,6 +99,12 @@ public class Scope {
         if (functions.containsKey(name)) return functions.get(name);
         else if (parentScope != null && lookUpon)
             return parentScope.getTypeFunction(name, true);
+        return null;
+    }
+    public Integer getInClassFunction(String name, boolean lookUpon) {
+        if (function_inclasses.containsKey(name)) return function_inclasses.get(name);
+        else if (parentScope != null && lookUpon)
+            return parentScope.getInClassFunction(name, true);
         return null;
     }
     
