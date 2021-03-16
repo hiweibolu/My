@@ -115,6 +115,12 @@ public class IRBuilder implements ASTVisitor {
     @Override
     public void visit(classDefNode it) {
 		gBList.class_sizes.put(it.name, it.scope.variables.size());
+
+/*System.out.println("hello");
+System.out.println(it.name);
+System.out.println(it.scope.variables.size());
+System.out.println("hello");*/
+
 		currentClass = new Type(it.name);
 		it.funcDefs.forEach(fd -> fd.accept(this));		
 		currentClass = null;
@@ -185,8 +191,8 @@ public class IRBuilder implements ASTVisitor {
     public void visit(whileStmtNode it) {
 		int oldLoopStart = loopStart, oldLoopEnd = loopEnd;
 		int oldLoopCont = loopCont;
-		loopStart = labelAlloc();
-		loopCont = loopEnd = labelAlloc();
+		loopCont = loopStart = labelAlloc();
+		loopEnd = labelAlloc();
 
 		IRLine line = new IRLine(lineType.LABEL);
 		line.label = loopStart;
@@ -817,9 +823,8 @@ public class IRBuilder implements ASTVisitor {
 						currentBlock.lines.add(line);
 
 						it.regId = new IRRegIdentifier(regId.id, regId.typ, true);
-					}
+					}//it.regId = nowScope.getRegIdVariable(it.name, false);
 				}
-				//it.regId = nowScope.getRegIdVariable(it.name, false);
 				break;
 			}
 			else if (nowScope.containsFunction(it.name, false)){

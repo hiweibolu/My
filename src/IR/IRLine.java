@@ -251,7 +251,7 @@ public class IRLine {
 						System.out.println("%hi(" + args.get(1).toGASM() + ")");
 						break;
 					case 8:
-						if (args.get(0).id >= (1 << 12)){
+						if (args.get(1).id >= (1 << 12)){
 							System.out.print("\tlui\t");
 							System.out.print(args.get(0).toASM() + ",");
 							System.out.println(args.get(1).id >> 12);

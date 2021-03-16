@@ -147,6 +147,7 @@ public class SemanticChecker implements ASTVisitor {
 		
 		if (inInit){
 			currentScope = new Scope(currentScope);
+			currentScope.regIdAllocator = new RegIdAllocator();
 			it.scope = currentScope;
 			currentScope.class_name = it.name;
 
@@ -201,7 +202,12 @@ public class SemanticChecker implements ASTVisitor {
 		}
         
 		if (gScope == currentScope) currentScope.defineVariable(it.name, it.type, it.pos, 2);
-		else if (currentClass != null && inVarInit) currentScope.defineVariable(it.name, it.type, it.pos, 11);
+		else if (currentClass != null && inVarInit){
+			currentScope.defineVariable(it.name, it.type, it.pos, 11);
+			/*System.out.print(it.name + ' ');
+			currentScope.getRegIdVariable(it.name, false).print();
+			System.out.println();*/
+		}
 		else currentScope.defineVariable(it.name, it.type, it.pos, 1);
     }
 
