@@ -44,5 +44,6 @@ public class Type {
 	public boolean isString(){ return equals("string"); }
 	public boolean isNull(){ return equals("null"); }
 	public boolean isClass(){ return !isInt() && !isBool() && !isVoid() && !isString() && !isNull() && this.dimension == 0; }
+	public boolean isClassArray(){ return !isInt() && !isBool() && !isVoid() && !isString() && !isNull(); }
 	
 }

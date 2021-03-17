@@ -159,6 +159,7 @@ public class SemanticChecker implements ASTVisitor {
 		{
 			currentScope = gScope.getScopeFromName(it.name, it.pos);
 			it.varDefs.forEach(vd -> vd.accept(this));
+			gBList.class_sizes.put(it.name, currentScope.variables.size());
 		}
 		else {
 			currentScope = gScope.getScopeFromName(it.name, it.pos);

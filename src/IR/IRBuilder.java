@@ -114,7 +114,6 @@ public class IRBuilder implements ASTVisitor {
 
     @Override
     public void visit(classDefNode it) {
-		gBList.class_sizes.put(it.name, it.scope.variables.size());
 
 /*System.out.println("hello");
 System.out.println(it.name);
@@ -306,13 +305,14 @@ System.out.println("hello");*/
 		if (currentBlock.maxParamsNumber + 1 < it.Params.size())
 			currentBlock.maxParamsNumber = it.Params.size() - 1;
 
-		it.Params.forEach(p -> p.accept(this));
+		//it.Params.forEach(p -> p.accept(this));
 		ExprNode func = it.Params.get(0);
 
 		int have_ptr = it.scope.getInClassFunction(func.funcName, true);
 		//if (func.parent != null) have_ptr = 1;
 		if (it.Params.size() > 0){
 			for (int i = it.Params.size() - 1; i > 0; i--){
+				it.Params.get(i).accept(this);
 				IRLine line = new IRLine(lineType.MOVE);
 				line.args.add(new IRRegIdentifier(i - 1 + have_ptr, 3, false));
 				line.args.add(it.Params.get(i).regId);
@@ -322,6 +322,7 @@ System.out.println("hello");*/
 
 		if (have_ptr == 1){
 			if (func.parent != null){
+				it.Params.get(0).accept(this);
 				IRLine line = new IRLine(lineType.MOVE);
 				line.args.add(new IRRegIdentifier(0, 3, false));
 				line.args.add(it.Params.get(0).regId);
@@ -669,7 +670,16 @@ System.out.println("hello");*/
 
 	public IRRegIdentifier newMalloc(newExprNode it, int i){
 		if (i >= it.Exprs.size()){
-			if (it.type.isClass()){
+				//if (gBList.class_sizes.containsKey(it.type.name)){
+					/*System.out.println(it.type.name);
+					System.out.println(gBList.class_sizes.containsKey(it.type.name));
+					System.out.println(it.Exprs.size());
+					System.out.println(it.type.dimension);
+					System.out.println(it.type.isClass() || gBList.class_sizes.containsKey(it.type.name) && it.Exprs.size() == it.type.dimension);
+
+					System.out.println("--------");*/
+				//}
+			if (it.type.isClass() || gBList.class_sizes.containsKey(it.type.name) && it.Exprs.size() == it.type.dimension){
 				IRLine line = new IRLine(lineType.LOAD);
 				line.args.add(new IRRegIdentifier(10, 0, false));
 				line.args.add(new IRRegIdentifier(gBList.class_sizes.get(it.type.name) << 2, 8, false));
@@ -693,19 +703,33 @@ System.out.println("hello");*/
 					currentBlock.lines.add(line);
 				};
 				return nowRegId;
-			}else return new IRRegIdentifier(0, 0, false);
+			}else{
+				return new IRRegIdentifier(0, 0, false);
+			}
 		}
-		IRRegIdentifier nowRegId = currentBlock.regIdAllocator.alloc(1);
-		IRLine line = new IRLine(lineType.MOVE);
-		line.args.add(new IRRegIdentifier(10, 0, false));
-		line.args.add(it.Exprs.get(i).regId);
-		currentBlock.lines.add(line);
-
 		IRRegIdentifier iter = currentBlock.regIdAllocator.alloc(1);
-		line = new IRLine(lineType.LOAD);
+		IRRegIdentifier nowRegId = currentBlock.regIdAllocator.alloc(1);
+		IRRegIdentifier ttemp = currentBlock.regIdAllocator.alloc(5);
+		IRLine line = new IRLine(lineType.MOVE);
 		line.args.add(iter);
 		line.args.add(it.Exprs.get(i).regId);
 		currentBlock.lines.add(line);
+
+		line = new IRLine(lineType.MOVE);
+		line.args.add(ttemp);
+		line.args.add(it.Exprs.get(i).regId);
+		currentBlock.lines.add(line);
+
+		
+		line = new IRLine(lineType.MOVE);
+		line.args.add(new IRRegIdentifier(10, 0, false));
+		line.args.add(ttemp);
+		currentBlock.lines.add(line);
+
+		/*line = new IRLine(lineType.LOAD);
+		line.args.add(new IRRegIdentifier(10, 0, false));
+		line.args.add(it.Exprs.get(i).regId);
+		currentBlock.lines.add(line);*/
 
 		line = new IRLine(lineType.CALL);
 		line.func = "my_array_alloc";

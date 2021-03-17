@@ -18,12 +18,15 @@ import java.io.InputStream;
 
 public class Main {
     public static void main(String[] args) throws Exception{
-		boolean onlySemantic = false;
+		boolean onlySemantic = false, onlyIR = false;
 		InputStream input = System.in;
 		for (String arg : args) {
 			switch (arg) {
 				case "-semantic":
 					onlySemantic = true;
+					break;
+				case "-IR":
+					onlyIR = true;
 					break;
 				case "-test":
 					String name = "test1.mx";
@@ -51,9 +54,13 @@ public class Main {
 
 			if (!onlySemantic){
             	new IRBuilder(gIRList, gScope).visit(ASTRoot);
-				gIRList.initASM();
-				//gIRList.print();
-				gIRList.printASM();
+				if (onlyIR){
+					//gIRList.initASM();
+					gIRList.print();
+				}else{
+					gIRList.initASM();
+					gIRList.printASM();
+				}
 			}
 
             /*mainFn f = new mainFn();
