@@ -51,9 +51,9 @@ public class Main {
 
 			if (!onlySemantic){
             	new IRBuilder(gIRList, gScope).visit(ASTRoot);
-				//gIRList.initASM();
-				gIRList.print();
-				//gIRList.printASM();
+				gIRList.initASM();
+				//gIRList.print();
+				gIRList.printASM();
 			}
 
             /*mainFn f = new mainFn();
