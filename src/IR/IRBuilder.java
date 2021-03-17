@@ -305,14 +305,13 @@ System.out.println("hello");*/
 		if (currentBlock.maxParamsNumber + 1 < it.Params.size())
 			currentBlock.maxParamsNumber = it.Params.size() - 1;
 
-		//it.Params.forEach(p -> p.accept(this));
+		it.Params.forEach(p -> p.accept(this));
 		ExprNode func = it.Params.get(0);
 
 		int have_ptr = it.scope.getInClassFunction(func.funcName, true);
-		//if (func.parent != null) have_ptr = 1;
 		if (it.Params.size() > 0){
 			for (int i = it.Params.size() - 1; i > 0; i--){
-				it.Params.get(i).accept(this);
+				//it.Params.get(i).accept(this);
 				IRLine line = new IRLine(lineType.MOVE);
 				line.args.add(new IRRegIdentifier(i - 1 + have_ptr, 3, false));
 				line.args.add(it.Params.get(i).regId);
@@ -322,7 +321,7 @@ System.out.println("hello");*/
 
 		if (have_ptr == 1){
 			if (func.parent != null){
-				it.Params.get(0).accept(this);
+				//it.Params.get(0).accept(this);
 				IRLine line = new IRLine(lineType.MOVE);
 				line.args.add(new IRRegIdentifier(0, 3, false));
 				line.args.add(it.Params.get(0).regId);
@@ -847,7 +846,15 @@ System.out.println("hello");*/
 						currentBlock.lines.add(line);
 
 						it.regId = new IRRegIdentifier(regId.id, regId.typ, true);
-					}//it.regId = nowScope.getRegIdVariable(it.name, false);
+					}else{
+						/*IRRegIdentifier regId = currentBlock.regIdAllocator.alloc(5);
+						IRLine line = new IRLine(lineType.MOVE);
+						line.args.add(regId);
+						line.args.add(it.regId);
+						currentBlock.lines.add(line);
+						it.regId = regId;*/
+
+					}
 				}
 				break;
 			}

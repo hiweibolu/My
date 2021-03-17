@@ -224,13 +224,20 @@ public class IRBlock {
 	}
 
 	public int[] free_reg = new int [32];
-	public int[] used;
+	public int[] used, first_used, last_used;
 	public IRRegIdentifier[] used_reg, used_l_reg;
 	public int paramRAM;
 
-	public int get_free_reg(){
+	public int get_free_reg(int id){
 		for (int i = 0; i < 32; i++)
-			if (free_reg[i] == 1) return i;
+			if (free_reg[i] == 1){
+				boolean found = false;
+				for (int j = first_used[id]; j < last_used[id]; j++){
+					IRLine now_line = lines.get(j);
+					if (now_line.args.size() > 0 && now_line.args.get(0).typ == 3 && now_line.args.get(0).id == i - 10) found=true;
+				}
+				if (!found) return i;
+			}
 		return 0;
 	}
 	public void easyAlloc(IRLine now_line, int l, int r){
@@ -241,7 +248,7 @@ public class IRBlock {
 					if (used_l_reg[regId.id] != null){
 						temp = used_l_reg[regId.id];
 					}else{
-						int t = get_free_reg();
+						int t = get_free_reg(regId.id);
 						if (t > 0){
 							free_reg[t] = 0;
 							temp = used_reg[regId.id] = new IRRegIdentifier(t, 0, false);
@@ -270,11 +277,17 @@ public class IRBlock {
 	public void alloc(){
 		int temp_size = regIdAllocator.size(5);
 		used = new int [temp_size];
+		first_used = new int [temp_size];
+		last_used = new int [temp_size];
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
 			for (int j = 0; j < now_line.args.size(); j++){
 				IRRegIdentifier regId = now_line.args.get(j);
-				if (regId.typ == 5) used[regId.id]++;
+				if (regId.typ == 5){
+					used[regId.id]++;
+					if (first_used[regId.id] == 0) first_used[regId.id] = i;
+					last_used[regId.id] = i;
+				}
 			}
 		}
 		used_reg = new IRRegIdentifier [temp_size];
@@ -335,11 +348,18 @@ public class IRBlock {
 	public void allocLocal(){
 		int temp_size = regIdAllocator.size(5);
 		used = new int [temp_size];
+		first_used = new int [temp_size];
+		last_used = new int [temp_size];
+
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
 			for (int j = 0; j < now_line.args.size(); j++){
 				IRRegIdentifier regId = now_line.args.get(j);
-				if (regId.typ == 5) used[regId.id]++;
+				if (regId.typ == 5){
+					used[regId.id]++;
+					if (first_used[regId.id] == 0) first_used[regId.id] = 0;
+					last_used[regId.id] = 0;
+				}
 			}
 		}
 		used_reg = new IRRegIdentifier [temp_size];
