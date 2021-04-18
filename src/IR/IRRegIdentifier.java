@@ -3,7 +3,7 @@ package IR;
 public class IRRegIdentifier{
 	public int id, typ;
 	public Integer useId = null;
-	public boolean pointer;
+	public boolean pointer, mult = false;
 
 	public IRRegIdentifier(int id, int typ, boolean pointer){
 		this.id = id;
@@ -12,6 +12,12 @@ public class IRRegIdentifier{
 		if (pointer){
 			this.typ = 6;
 		}
+	}
+
+	public void assign(IRRegIdentifier other){
+		id = other.id;
+		typ = other.typ;
+		mult = other.mult;
 	}
 
 	public void print(){
@@ -28,6 +34,7 @@ public class IRRegIdentifier{
 			case 9: System.out.print("S"); break;
 			case 10: System.out.print("Q"); break;
 			case 11: System.out.print("C"); break;
+			case 12: System.out.print("Spill"); break;
 		}
 		System.out.print(id);
 	}

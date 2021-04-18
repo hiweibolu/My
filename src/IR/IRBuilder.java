@@ -78,6 +78,7 @@ public class IRBuilder implements ASTVisitor {
 
 			inMainInit = true;
 			if (it.name.equals("main")) gVarDefs.forEach(d -> d.accept(this));
+			inMainInit = false;
 
 			it.block.accept(this);
 
@@ -106,6 +107,9 @@ public class IRBuilder implements ASTVisitor {
 			}
 			it.block.accept(this);
 		}
+		line = new IRLine(lineType.LABEL);
+		line.label = currentBlock.returnLabel;
+		currentBlock.lines.add(line);
     }
 	
 	@Override

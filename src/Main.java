@@ -18,7 +18,7 @@ import java.io.InputStream;
 
 public class Main {
     public static void main(String[] args) throws Exception{
-		boolean onlySemantic = false, onlyIR = false;
+		boolean onlySemantic = false, onlyIR = false, openOptimize = false;
 		InputStream input = System.in;
 		for (String arg : args) {
 			switch (arg) {
@@ -31,6 +31,9 @@ public class Main {
 				case "-test":
 					String name = "test1.mx";
 					input = new FileInputStream(name);
+					break;
+				case "-optimize":
+					openOptimize = true;
 					break;
 			}
 		}
@@ -54,12 +57,19 @@ public class Main {
 
 			if (!onlySemantic){
             	new IRBuilder(gIRList, gScope).visit(ASTRoot);
-				if (onlyIR){
-					//gIRList.initASM();
+				if (openOptimize){
+					gIRList.optimize();
 					gIRList.print();
+					//gIRList.initASM();
+					//gIRList.printASM();
 				}else{
-					gIRList.initASM();
-					gIRList.printASM();
+					if (onlyIR){
+						//gIRList.initASM();
+						gIRList.print();
+					}else{
+						gIRList.initASM();
+						gIRList.printASM();
+					}
 				}
 			}
 
