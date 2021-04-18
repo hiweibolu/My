@@ -99,15 +99,16 @@ public class IRBlock {
 					IRRegIdentifier temp, temp2;
 					switch (regId.typ){
 						case 3:
-							if (regId.id < 6){
+							if (regId.id < 8){
+								now_line.args.set(0, new IRRegIdentifier(regId.id + 10, 0, false));
 							}else{
 								temp = regIdAllocator.alloc(5);
 								line = new IRLine(lineType.SW);
 								line.args.add(temp);
 								IRRegIdentifier an_temp;
-								if (regIdAllocator.size(7) < regId.id - 5){
+								if (regIdAllocator.size(7) < regId.id - 7){
 									an_temp = regIdAllocator.alloc(7);
-								}else an_temp = new IRRegIdentifier(regId.id - 6, 7, false);
+								}else an_temp = new IRRegIdentifier(regId.id - 8, 7, false);
 								line.args.add(an_temp);
 								new_lines.add(line);
 								now_line.args.set(0, temp);
@@ -175,8 +176,7 @@ public class IRBlock {
 						IRLine line;
 						IRRegIdentifier temp;
 						switch (regId.typ){
-							case 1:
-								if (regId.id < now_local) break;
+							case 12:
 								temp = regIdAllocator.alloc(5);
 								line = new IRLine(lineType.LW);
 								line.args.add(temp);
@@ -201,8 +201,7 @@ public class IRBlock {
 					IRLine line;
 					IRRegIdentifier temp;
 					switch (regId.typ){
-						case 1:
-							if (regId.id < now_local) break;
+						case 12:
 							temp = regIdAllocator.alloc(5);
 							line = new IRLine(lineType.SW);
 							line.args.add(temp);
@@ -275,7 +274,7 @@ public class IRBlock {
 			}
 		}
 	}
-	public void alloc(){
+	/*public void alloc(){
 		int temp_size = regIdAllocator.size(5);
 		used = new int [temp_size];
 		first_used = new int [temp_size];
@@ -345,7 +344,7 @@ public class IRBlock {
 				case RETURN:
 			}
 		}
-	}
+	}*/
 	public void allocLocal(){
 		int temp_size = regIdAllocator.size(5);
 		used = new int [temp_size];
@@ -366,7 +365,7 @@ public class IRBlock {
 		used_reg = new IRRegIdentifier [temp_size];
 		used_l_reg = new IRRegIdentifier [temp_size];
 		for (int i = 0; i < 32; i++) free_reg[i] = 0;
-		for (int i = 16; i <= 17; i++) free_reg[i] = 1;
+		for (int i = 30; i <= 31; i++) free_reg[i] = 1;
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
 			switch (now_line.lineCode){
@@ -384,7 +383,7 @@ public class IRBlock {
 					easyRelease(now_line, 0, now_line.args.size());
 					break;
 				case CALL:
-					for (int j = 16; j <= 17; j++){
+					for (int j = 30; j <= 31; j++){
 						free_reg[j] = 1;
 					}
 					break;
@@ -442,7 +441,12 @@ public class IRBlock {
 	public boolean[] local_vis;
 	public void jump_update(){
 		jmp_target = new int[lines.size()];
-		label_target = new int[lines.size()];
+		int max_label = 0;
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			if (now_line.lineCode == lineType.LABEL && max_label < now_line.label) max_label = now_line.label;
+		}
+		label_target = new int[max_label + 1];
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
 			if (now_line.lineCode == lineType.LABEL){
@@ -652,7 +656,8 @@ public class IRBlock {
 						alloc_pass(i + 1, regId.id);
 					}
 				}else if (regId.typ == 0){
-					palloc_pass(i + 1, i - 10 + regIdAllocator.size(5));
+					//System.out.println(regId.id + " " + (regId.id - 10 + regIdAllocator.size(5)));
+					palloc_pass(i + 1, regId.id - 10 + regIdAllocator.size(5));
 				}
 			}
 		}
@@ -685,7 +690,7 @@ public class IRBlock {
 
 	public int totalRAM, realRAM, addrStartLocal;
 	public void calcRAM(){
-		totalRAM = regIdAllocator.size(1) + regIdAllocator.size(7);
+		totalRAM = regIdAllocator.size(12) + regIdAllocator.size(7);
 		addrStartLocal = 0;
 		totalRAM++;
 		addrStartLocal -= 4; // store s0

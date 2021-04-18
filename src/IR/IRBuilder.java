@@ -71,8 +71,8 @@ public class IRBuilder implements ASTVisitor {
 			for (int i = 0; i < it.funcParams.size(); i++){
 				line =  new IRLine(lineType.MOVE);
 				line.args.add(it.funcParams.get(i).regId);
-				if (i < 6) line.args.add(new IRRegIdentifier(i + 10, 0, false));
-				else line.args.add(new IRRegIdentifier(i - 6, 4, false));
+				if (i < 8) line.args.add(new IRRegIdentifier(i + 10, 0, false));
+				else line.args.add(new IRRegIdentifier(i - 8, 4, false));
 				currentBlock.lines.add(line);
 			}
 
@@ -101,8 +101,8 @@ public class IRBuilder implements ASTVisitor {
 			for (int i = 0; i < it.funcParams.size(); i++){
 				line = new IRLine(lineType.MOVE);
 				line.args.add(it.funcParams.get(i).regId);
-				if (i + 1 < 6) line.args.add(new IRRegIdentifier(i + 1 + 10, 0, false));
-				else line.args.add(new IRRegIdentifier(i + 1 - 6, 4, false));
+				if (i + 1 < 8) line.args.add(new IRRegIdentifier(i + 1 + 10, 0, false));
+				else line.args.add(new IRRegIdentifier(i + 1 - 8, 4, false));
 				currentBlock.lines.add(line);
 			}
 			it.block.accept(this);

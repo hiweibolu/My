@@ -42,16 +42,20 @@ public class IRBlockList {
 		blocks.forEach(b -> b.expand());
 		//print();
 		blocks.forEach(b -> b.graphColor());
+		blocks.forEach(b -> b.remove());
+		blocks.forEach(b -> b.expandLocal());
+		blocks.forEach(b -> b.allocLocal());
+		blocks.forEach(b -> b.calcRAM());
 	}
 
-	public void initASM(){
+	/*public void initASM(){
 		blocks.forEach(b -> b.expand());
 		blocks.forEach(b -> b.alloc());
 		blocks.forEach(b -> b.expandLocal());
 		blocks.forEach(b -> b.allocLocal());
 		blocks.forEach(b -> b.remove());
 		blocks.forEach(b -> b.calcRAM());
-	}
+	}*/
 
 	public void printASM(){
 		if (strings.size() > 0 || globals.size() > 0){

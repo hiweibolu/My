@@ -281,7 +281,7 @@ public class IRLine {
 						System.out.print(0);
 						System.out.println("(" + args.get(1).toASM() + ")");
 						break;
-					case 1:
+					case 12:
 						System.out.print(block.addrLocal(args.get(1).id));
 						System.out.println("(s0)");
 						break;
@@ -307,7 +307,7 @@ public class IRLine {
 						System.out.print(0);
 						System.out.println("(" + args.get(1).toASM() + ")");
 						break;
-					case 1:
+					case 12:
 						System.out.print(block.addrLocal(args.get(1).id));
 						System.out.println("(s0)");
 						break;

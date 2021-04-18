@@ -57,30 +57,12 @@ public class Main {
 
 			if (!onlySemantic){
             	new IRBuilder(gIRList, gScope).visit(ASTRoot);
-				if (openOptimize){
-					gIRList.optimize();
-					gIRList.print();
-					//gIRList.initASM();
-					//gIRList.printASM();
-				}else{
-					if (onlyIR){
-						//gIRList.initASM();
-						gIRList.print();
-					}else{
-						gIRList.initASM();
-						gIRList.printASM();
-					}
-				}
+				gIRList.optimize();
+				//gIRList.print();
+				gIRList.printASM();
+
 			}
 
-            /*mainFn f = new mainFn();
-            new IRBuilder(f, gScope).visit(ASTRoot);
-            // new IRPrinter(System.out).visitFn(f);
-
-            AsmFn asmF = new AsmFn();
-            new InstSelector(asmF).visitFn(f);
-            new RegAlloc(asmF).work();
-            new AsmPrinter(asmF, System.out).print();*/
         } catch (error er) {
             System.err.println(er.toString());
             throw new RuntimeException();

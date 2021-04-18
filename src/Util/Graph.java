@@ -49,7 +49,7 @@ public class Graph {
 			}
 		}
 		for (int i = n - 8; i < n; i++){
-			val[i] = i - (n - 8) + 10;
+			val[i] = i - (n - 8);
 			colored[i] = true;
 		}
 
@@ -92,16 +92,19 @@ public class Graph {
 			}
 		}
 
-		for (int i = 0; i < color_arr_num; i++){
+		//System.out.println(color_arr_num);
+		for (int i = color_arr_num - 1; i >= 0; i--){
 			int v = color_arr[i];
-			int now = 0;
+			boolean[] used = new boolean[color.length];
 			for (int j = 0; j < to.get(v).size(); j++){
 				int x = to.get(v).get(j);
-				if (!spilled[x]){
-					while (now == val[x]) now++;
-				}
+				if (!spilled[x] && val[x] != -1) used[val[x]] = true;
 			};
+			int now = 0;
+			while (used[now]) now++;
 			val[v] = now;
+			/*System.out.print(v + "(" + val[v] + ")" + " : ");
+			System.out.println(to.get(v));*/
 		}
 	}
 
