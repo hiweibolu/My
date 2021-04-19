@@ -454,7 +454,7 @@ System.out.println("hello");*/
 				it.rhs.accept(this);
 				if (it.lhs.regId.cst && it.rhs.regId.cst){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						it.lhs.regId.id & it.rhs.regId.id, 8, false);
+						it.lhs.regId.val & it.rhs.regId.val, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -504,7 +504,7 @@ System.out.println("hello");*/
 				it.rhs.accept(this);
 				if (it.lhs.regId.cst && it.rhs.regId.cst){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						it.lhs.regId.id | it.rhs.regId.id, 8, false);
+						it.lhs.regId.val | it.rhs.regId.val, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -611,7 +611,7 @@ System.out.println("hello");*/
 			case eq:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						(it.lhs.regId.id == it.rhs.regId.id) ? 1 : 0, 8, false);
+						(it.lhs.regId.val == it.rhs.regId.val) ? 1 : 0, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -626,7 +626,7 @@ System.out.println("hello");*/
 			case neq:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						(it.lhs.regId.id != it.rhs.regId.id) ? 1 : 0, 8, false);
+						(it.lhs.regId.val != it.rhs.regId.val) ? 1 : 0, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -641,7 +641,7 @@ System.out.println("hello");*/
 			case ge:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						(it.lhs.regId.id > it.rhs.regId.id) ? 1 : 0, 8, false);
+						(it.lhs.regId.val > it.rhs.regId.val) ? 1 : 0, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -656,7 +656,7 @@ System.out.println("hello");*/
 			case geq:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						(it.lhs.regId.id >= it.rhs.regId.id) ? 1 : 0, 8, false);
+						(it.lhs.regId.val >= it.rhs.regId.val) ? 1 : 0, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -671,7 +671,7 @@ System.out.println("hello");*/
 			case le:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						(it.lhs.regId.id < it.rhs.regId.id) ? 1 : 0, 8, false);
+						(it.lhs.regId.val < it.rhs.regId.val) ? 1 : 0, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -686,7 +686,7 @@ System.out.println("hello");*/
 			case leq:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						(it.lhs.regId.id <= it.rhs.regId.id) ? 1 : 0, 8, false);
+						(it.lhs.regId.val <= it.rhs.regId.val) ? 1 : 0, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -701,7 +701,7 @@ System.out.println("hello");*/
 			case add:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						it.lhs.regId.id + it.rhs.regId.id, 8, false);
+						it.lhs.regId.val + it.rhs.regId.val, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -717,7 +717,7 @@ System.out.println("hello");*/
 			//case oror:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						it.lhs.regId.id | it.rhs.regId.id, 8, false);
+						it.lhs.regId.val | it.rhs.regId.val, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -733,7 +733,7 @@ System.out.println("hello");*/
 			//case andand:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						it.lhs.regId.id & it.rhs.regId.id, 8, false);
+						it.lhs.regId.val & it.rhs.regId.val, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -748,7 +748,7 @@ System.out.println("hello");*/
 			case sub:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						it.lhs.regId.id - it.rhs.regId.id, 8, false);
+						it.lhs.regId.val - it.rhs.regId.val, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -763,7 +763,7 @@ System.out.println("hello");*/
 			case xor:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						it.lhs.regId.id ^ it.rhs.regId.id, 8, false);
+						it.lhs.regId.val ^ it.rhs.regId.val, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -777,8 +777,9 @@ System.out.println("hello");*/
 				break;
 			case shl:
 				if (flag){
+					//System.out.println(it.lhs.regId.val + " " + it.rhs.regId.val);
 					IRRegIdentifier regId = new IRRegIdentifier(
-						it.lhs.regId.id << it.rhs.regId.id, 8, false);
+						it.lhs.regId.val << it.rhs.regId.val, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -793,7 +794,7 @@ System.out.println("hello");*/
 			case shr:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						it.lhs.regId.id >> it.rhs.regId.id, 8, false);
+						it.lhs.regId.val >> it.rhs.regId.val, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -808,7 +809,7 @@ System.out.println("hello");*/
 			case mul:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						it.lhs.regId.id * it.rhs.regId.id, 8, false);
+						it.lhs.regId.val * it.rhs.regId.val, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -823,7 +824,7 @@ System.out.println("hello");*/
 			case div:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						(it.rhs.regId.id != 0) ? it.lhs.regId.id / it.rhs.regId.id : 114514, 8, false);
+						(it.rhs.regId.val != 0) ? it.lhs.regId.val / it.rhs.regId.val : 114514, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
@@ -838,7 +839,7 @@ System.out.println("hello");*/
 			case mod:
 				if (flag){
 					IRRegIdentifier regId = new IRRegIdentifier(
-						(it.rhs.regId.id != 0) ? it.lhs.regId.id % it.rhs.regId.id : 1919810, 8, false);
+						(it.rhs.regId.val != 0) ? it.lhs.regId.val % it.rhs.regId.val : 1919810, 8, false);
 					regId.cst = true;
 					regId.val = regId.id;
 					line = new IRLine(lineType.LOAD);	
