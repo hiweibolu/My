@@ -400,7 +400,7 @@ public class IRBlock {
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
 			if (now_line.lineCode == lineType.MOVE){
-				if (now_line.args.get(0).id == now_line.args.get(1).id){
+				if (now_line.args.get(0).id == now_line.args.get(1).id && now_line.args.get(0).typ == now_line.args.get(1).typ){
 					continue;
 				}
 			}
@@ -465,7 +465,7 @@ public class IRBlock {
 	}
 
 	public ArrayList<Integer> local_list;
-	public ArrayList<ArrayList<Integer>>  local_prec;
+	public ArrayList<ArrayList<ArrayList<Integer>>>  local_prec;
 	public int[] local_dad;
 	public IRRegIdentifier[] local_temp;
 	public void local_pass(int i, int id, int pos){
@@ -476,12 +476,13 @@ public class IRBlock {
 			for (;j != -1 && j < now_line.args.size(); j++){
 				IRRegIdentifier regId = now_line.args.get(j);
 				if (regId.typ == 1 && regId.id == id){
-					now_line.args.set(j, local_temp[pos]);
+					local_prec.get(i).get(j).add(pos);
+					//now_line.args.set(j, local_temp[pos]);
 				}
 			}
 			if (def_line(now_line.lineCode) && 
 				now_line.args.get(0).typ == 1 && now_line.args.get(0).id == id){
-				local_prec.get(i).add(pos);
+				local_prec.get(i).get(0).add(pos);
 				break;
 			}
 
@@ -495,6 +496,32 @@ public class IRBlock {
 			}
 		}
 	}
+	public void assign_pass(int i, int id, int pos){
+		while (i < lines.size() && vis[i] < vis_now){
+			vis[i] = vis_now;
+			IRLine now_line = lines.get(i);
+			int j = use_line(now_line.lineCode);
+			for (;j != -1 && j < now_line.args.size(); j++){
+				IRRegIdentifier regId = now_line.args.get(j);
+				if (regId.typ == 1 && regId.id == id){
+					now_line.args.set(j, local_temp[pos]);
+				}
+			}
+			if (def_line(now_line.lineCode) && 
+				now_line.args.get(0).typ == 1 && now_line.args.get(0).id == id){
+				break;
+			}
+
+			if (now_line.lineCode == lineType.JUMP){
+				i = jmp_target[i];
+			}else{
+				if (now_line.lineCode == lineType.BEQ || now_line.lineCode == lineType.BNEQ){
+					assign_pass(jmp_target[i], id, pos);
+				}
+				i++;
+			}
+		}
+	}
 
 	public void SSA(){
 		//System.out.println("=======" + String.valueOf(lines.size()));
@@ -502,7 +529,10 @@ public class IRBlock {
 		vis = new int[lines.size()];
 		local_vis = new boolean[lines.size()];
 		local_prec = new ArrayList<>();
-		for (int i = 0; i < lines.size(); i++) local_prec.add(new ArrayList<>());
+		for (int i = 0; i < lines.size(); i++){
+			local_prec.add(new ArrayList<>());
+			for (int j = 0; j < lines.get(i).args.size(); j++) local_prec.get(i).add(new ArrayList<>());
+		}
 		local_dad = new int[lines.size()];
 		local_temp = new IRRegIdentifier[lines.size()];
 
@@ -511,37 +541,36 @@ public class IRBlock {
 			if (def_line(now_line.lineCode) && now_line.args.get(0).typ == 1){
 				vis_now++;
 				local_temp[i] = regIdAllocator.alloc(5);
-				local_pass(i+1, now_line.args.get(0).id, i);
+				local_pass(i + 1, now_line.args.get(0).id, i);
 			}
 		}
 
 		/*for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
-			System.out.print(local_prec.get(i).size());
-			System.out.print(" ");
-			System.out.print(jmp_target[i]);
-			System.out.println();
-			local_prec.get(i).forEach(b -> System.out.println(local_temp[b]));
+			System.out.print(local_prec.get(i) + " ");
 			now_line.print();
 		}*/
 
 		for (int i = 0; i < lines.size(); i++){
-			for (int j = 1; j < local_prec.get(i).size(); j++){
-				int x = local_prec.get(i).get(0);
-				int y = local_prec.get(i).get(j);
-				local_temp[x].mult = true;
-				local_temp[y].mult = true;
-				int u = getdad(local_dad, x);
-				int v = getdad(local_dad, y);
-				if (u != v){
-					local_dad[v] = u;
+			for (int k = 0; k < lines.get(i).args.size(); k++) 
+				for (int j = 1; j < local_prec.get(i).get(k).size(); j++){
+					int x = local_prec.get(i).get(k).get(0);
+					int y = local_prec.get(i).get(k).get(j);
+					local_temp[x].mult = true;
+					local_temp[y].mult = true;
+					int u = getdad(local_dad, x);
+					int v = getdad(local_dad, y);
+					if (u != v){
+						local_dad[v] = u;
+					}
 				}
-			}
 		}
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
 			if (def_line(now_line.lineCode) && now_line.args.get(0).typ == 1){
 				local_temp[i].assign(local_temp[getdad(local_dad, i)]);
+				vis_now++;
+				assign_pass(i + 1, now_line.args.get(0).id, i);
 				now_line.args.set(0, local_temp[i]);
 			}
 		}
@@ -550,27 +579,70 @@ public class IRBlock {
 
 	public Graph graph;
 	public int[] reach, t_end, t_begin;
+	int reach_num;
+	public int[] reach_stack, reach_state;
 	int reach_pass(int i){
-		if (vis[i] == vis_now){
-			return reach[i];
-		}
-		vis[i] = vis_now;
-		reach[i] = i;
-		IRLine now_line = lines.get(i);
-		if (now_line.lineCode == lineType.JUMP){
-			reach_pass(jmp_target[i]);
-			if (reach[i] > reach[jmp_target[i]]) reach[i] = reach[jmp_target[i]];
-		}else{
-			if (now_line.lineCode == lineType.BEQ || now_line.lineCode == lineType.BNEQ){
-				reach_pass(jmp_target[i]);
+		reach_stack = new int[lines.size()];
+		reach_state = new int[lines.size()];
+		reach_num = 0;
+		reach_stack[reach_num++] = i;
+		while (reach_num > 0){
+			i = reach_stack[reach_num - 1];
+
+			/*if (vis[i] == vis_now){
+				if (now_line.lineCode == lineType.JUMP){
+					if (reach[i] > reach[jmp_target[i]]) reach[i] = reach[jmp_target[i]];
+				}else{
+					if (now_line.lineCode == lineType.BEQ || now_line.lineCode == lineType.BNEQ){
+						if (reach[i] > reach[jmp_target[i]]) reach[i] = reach[jmp_target[i]];
+					}
+					if (i + 1 < lines.size()){
+						if (reach[i] > reach[i + 1]) reach[i] = reach[i + 1];
+					}
+				}
+				//return reach[i];
+				reach_num--;
+				continue;
+			}*/
+			if (reach_state[i] == 0){
+				vis[i] = vis_now;
+				reach[i] = i;
+				IRLine now_line = lines.get(i);
+				if (now_line.lineCode == lineType.JUMP){
+					if (vis[jmp_target[i]] < vis_now) reach_stack[reach_num++] = jmp_target[i];
+					reach_state[i] = 1;
+				}else{
+					if (now_line.lineCode == lineType.BEQ || now_line.lineCode == lineType.BNEQ){
+						if (vis[jmp_target[i]] < vis_now) reach_stack[reach_num++] = jmp_target[i];
+						reach_state[i] = 2;
+						continue;
+					}
+					if (i + 1 < lines.size()){
+						if (vis[i + 1] < vis_now) reach_stack[reach_num++] = i + 1;
+						reach_state[i] = 3;
+						continue;
+					}
+					reach_state[i] = 4;
+				}
+			}else if (reach_state[i] == 1){
 				if (reach[i] > reach[jmp_target[i]]) reach[i] = reach[jmp_target[i]];
-			}
-			if (i + 1 < lines.size()){
-				reach_pass(i + 1);
+				reach_state[i] = 4;
+			}else if (reach_state[i] == 2){
+				if (reach[i] > reach[jmp_target[i]]) reach[i] = reach[jmp_target[i]];
+				if (i + 1 < lines.size()){
+					if (vis[i + 1] < vis_now) reach_stack[reach_num++] = i + 1;
+					reach_state[i] = 3;
+					continue;
+				}
+				reach_state[i] = 4;
+			}else if (reach_state[i] == 3){
 				if (reach[i] > reach[i + 1]) reach[i] = reach[i + 1];
+				reach_state[i] = 4;
+			}else{
+				reach_num --;
 			}
 		}
-		return reach[i];
+		return 0;
 	}
 	public void alloc_pass(int i, int id){
 		while (i < lines.size() && vis[i] < vis_now){
@@ -663,6 +735,9 @@ public class IRBlock {
 		}
 		/*for (int i = 0; i < regIdAllocator.size(5); i++){
 			System.out.println(i + " : " + t_begin[i] + " " + t_end[i] + " " + graph.saved[i]);
+		}
+		for (int i = 0; i < lines.size(); i++){
+			System.out.println(i + " : " + reach[i]);
 		}*/
 		graph.work();
 

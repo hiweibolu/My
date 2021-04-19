@@ -38,10 +38,12 @@ public class IRBlockList {
 
 	public void optimize(){
 		blocks.forEach(b -> b.expand_opt());
-		blocks.forEach(b -> b.SSA());
-		blocks.forEach(b -> b.expand());
 		//print();
+		blocks.forEach(b -> b.SSA());
+		//print();
+		blocks.forEach(b -> b.expand());
 		blocks.forEach(b -> b.graphColor());
+		//print();
 		blocks.forEach(b -> b.remove());
 		blocks.forEach(b -> b.expandLocal());
 		blocks.forEach(b -> b.allocLocal());

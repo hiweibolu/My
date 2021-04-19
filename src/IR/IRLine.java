@@ -124,21 +124,21 @@ public class IRLine {
 				break;
 			case NEQ:
 				System.out.print("\tsub\t");
-				System.out.print(args.get(1).toASM() + ",");
+				System.out.print("t5" + ",");
 				System.out.print(args.get(1).toASM() + ",");
 				System.out.println(args.get(2).toASM());
 				System.out.print("\tsnez\t");
 				System.out.print(args.get(0).toASM() + ",");
-				System.out.println(args.get(1).toASM());
+				System.out.println("t5");
 				break;
 			case EQ:
 				System.out.print("\tsub\t");
-				System.out.print(args.get(1).toASM() + ",");
+				System.out.print("t5" + ",");
 				System.out.print(args.get(1).toASM() + ",");
 				System.out.println(args.get(2).toASM());
 				System.out.print("\tseqz\t");
 				System.out.print(args.get(0).toASM() + ",");
-				System.out.println(args.get(1).toASM());
+				System.out.println("t5");
 				break;
 			case GE:
 				System.out.print("\tsgt\t");
