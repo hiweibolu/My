@@ -42,6 +42,8 @@ public class IRBlockList {
 		blocks.forEach(b -> b.SSA());
 		//print();
 		blocks.forEach(b -> b.expand());
+		//print();
+		blocks.forEach(b -> b.DCE());
 		blocks.forEach(b -> b.graphColor());
 		//print();
 		blocks.forEach(b -> b.remove());

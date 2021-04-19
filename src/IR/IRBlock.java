@@ -417,7 +417,7 @@ public class IRBlock {
 		switch (lineCode){
 			default:
 				return true;
-			case FUNC: case LABEL: case JUMP: case CALL: case BNEQ: case BEQ:
+			case FUNC: case LABEL: case JUMP: case CALL: case BNEQ: case BEQ: case SW:
 				return false;
 		}
 	}
@@ -425,7 +425,7 @@ public class IRBlock {
 		switch (lineCode){
 			default:
 				return 1;
-			case BNEQ: case BEQ:
+			case BNEQ: case BEQ: case SW:
 				return 0;
 			case FUNC: case LABEL: case JUMP: case CALL:
 				return -1;
@@ -757,6 +757,110 @@ public class IRBlock {
 				}
 			}
 		}
+	}
+
+	public ArrayList<ArrayList<Integer>> dce_to;
+	public boolean []active;
+	public void DCE(){
+		int reg_num = regIdAllocator.size(5);
+		dce_to = new ArrayList<>();
+		for (int i = 0; i < reg_num; i++) dce_to.add(new ArrayList<>());
+		active = new boolean[reg_num];
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			if (def_line(now_line.lineCode)){
+				IRRegIdentifier regId1 = now_line.args.get(0);
+				int x = 0;
+				if (regId1.typ == 2 || regId1.typ == 7 || regId1.typ == 0){
+					x = reg_num;
+				}else if (regId1.typ == 5){
+					x = regId1.id;
+				}else{
+					continue;
+				}
+				for (int j = 1; j < now_line.args.size(); j++){
+					IRRegIdentifier regId2 = now_line.args.get(j);
+					if (regId2.typ == 5){
+						/*int u = getdad(dce_dad, x);
+						int v = getdad(dce_dad, regId2.id);
+						if (u != v){
+							dce_dad[u] = v;
+						}*/
+						if (reg_num == x){
+							active[regId2.id] = true;
+						}else{
+							dce_to.get(x).add(regId2.id);
+						}
+					}
+				}
+			}
+			else if (now_line.lineCode == lineType.SW){ //SW Global
+				IRRegIdentifier regId1 = now_line.args.get(1);
+				int x = 0;
+				//if (regId1.typ == 2){
+				x = reg_num;
+				for (int j = 0; j < now_line.args.size(); j++){
+					IRRegIdentifier regId2 = now_line.args.get(j);
+					if (regId2.typ == 5){
+						active[regId2.id] = true;
+					}
+				}			
+			}
+			else if (now_line.lineCode == lineType.BEQ || now_line.lineCode == lineType.BNEQ){ //Branch
+				int x = reg_num;
+				for (int j = 0; j < now_line.args.size(); j++){
+					IRRegIdentifier regId2 = now_line.args.get(j);
+					if (regId2.typ == 5){
+						active[regId2.id] = true;
+					}
+				}
+			}
+		}
+
+		int[] b = new int [reg_num];
+		int tail = 0;
+		for (int i = 0; i < reg_num; i++)
+			if (active[i])
+				b[tail++] = i;
+		for (int i = 0; i < tail; i++){
+			int v = b[i];
+			for (int j = 0; j < dce_to.get(v).size(); j++){
+				int x = dce_to.get(v).get(j);
+				if (!active[x]){
+					b[tail++] = x;
+					active[x] = true;
+				}
+			};
+		}
+
+		ArrayList<IRLine> new_lines = new ArrayList<>();
+
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			if (def_line(now_line.lineCode)){
+				IRRegIdentifier regId = now_line.args.get(0);
+				if (regId.typ == 5 && !active[regId.id]){
+					//System.out.println("[DEAD CODE]");
+					//now_line.print();
+					continue;
+				}
+			}
+			new_lines.add(now_line);
+			//now_line.print();
+		}
+		lines = new_lines;
+
+		/*for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			now_line.print();
+			for (int j = 0; j < now_line.args.size(); j++){
+				IRRegIdentifier regId2 = now_line.args.get(j);
+				if (regId2.typ == 5){
+					System.out.print(active[regId2.id] + " ");
+				}
+			}			
+			System.out.println();
+		}*/
 	}
 
 	//----------------------------------------------------------------------------------------------------------------------------------------------
