@@ -1,9 +1,9 @@
 package IR;
 
 public class IRRegIdentifier{
-	public int id, typ;
+	public int id, typ, val;
 	public Integer useId = null;
-	public boolean pointer, mult = false;
+	public boolean pointer, mult = false, cst = false;
 
 	public IRRegIdentifier(int id, int typ, boolean pointer){
 		this.id = id;
@@ -18,6 +18,10 @@ public class IRRegIdentifier{
 		id = other.id;
 		typ = other.typ;
 		mult = other.mult;
+	}
+	public void cst_agn(IRRegIdentifier other){
+		cst = other.cst;
+		val = other.val;
 	}
 
 	public void print(){

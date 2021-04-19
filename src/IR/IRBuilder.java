@@ -449,16 +449,31 @@ System.out.println("hello");*/
 		IRLine line = null;
 		switch (it.opCode){// short-circuit
 			case andand:
+				it.lhs.accept(this);
+				int pos = currentBlock.lines.size();
+				it.rhs.accept(this);
+				if (it.lhs.regId.cst && it.rhs.regId.cst){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						it.lhs.regId.id & it.rhs.regId.id, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
+
 				int short_circuit = labelAlloc(), expr_end = labelAlloc();
 
-				it.lhs.accept(this);
 				line = new IRLine(lineType.BNEQ);
 				line.args.add(it.lhs.regId);
 				line.args.add(new IRRegIdentifier(0, 0, false));
 				line.label = short_circuit;
-				currentBlock.lines.add(line);
+				currentBlock.lines.add(pos, line);
 
-				it.rhs.accept(this);
+				//it.rhs.accept(this);
 				line = new IRLine(lineType.BNEQ);
 				line.args.add(it.rhs.regId);
 				line.args.add(new IRRegIdentifier(0, 0, false));
@@ -484,17 +499,33 @@ System.out.println("hello");*/
 				currentBlock.lines.add(line);
 				return;
 			case oror:
+				it.lhs.accept(this);
+				pos = currentBlock.lines.size();
+				it.rhs.accept(this);
+				if (it.lhs.regId.cst && it.rhs.regId.cst){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						it.lhs.regId.id | it.rhs.regId.id, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
+
 				short_circuit = labelAlloc();
 				expr_end = labelAlloc();
 
-				it.lhs.accept(this);
+				//it.lhs.accept(this);
 				line = new IRLine(lineType.BEQ);
 				line.args.add(it.lhs.regId);
 				line.args.add(new IRRegIdentifier(0, 0, false));
 				line.label = short_circuit;
-				currentBlock.lines.add(line);
+				currentBlock.lines.add(pos, line);
 
-				it.rhs.accept(this);
+				//it.rhs.accept(this);
 				line = new IRLine(lineType.BEQ);
 				line.args.add(it.rhs.regId);
 				line.args.add(new IRRegIdentifier(0, 0, false));
@@ -575,55 +606,248 @@ System.out.println("hello");*/
 			currentBlock.lines.add(line);
 			return;
 		}
+		boolean flag = it.lhs.regId.cst && it.rhs.regId.cst;
 		switch (it.opCode){
 			case eq:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						(it.lhs.regId.id == it.rhs.regId.id) ? 1 : 0, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.EQ);
 				break;
 			case neq:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						(it.lhs.regId.id != it.rhs.regId.id) ? 1 : 0, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.NEQ);
 				break;
 			case ge:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						(it.lhs.regId.id > it.rhs.regId.id) ? 1 : 0, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.GE);
 				break;
 			case geq:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						(it.lhs.regId.id >= it.rhs.regId.id) ? 1 : 0, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.GEQ);
 				break;
 			case le:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						(it.lhs.regId.id < it.rhs.regId.id) ? 1 : 0, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.LE);
 				break;
 			case leq:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						(it.lhs.regId.id <= it.rhs.regId.id) ? 1 : 0, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.LEQ);
 				break;
 			case add:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						it.lhs.regId.id + it.rhs.regId.id, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.ADD);
 				break;
 			case or:
 			//case oror:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						it.lhs.regId.id | it.rhs.regId.id, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.OR);
 				break;
 			case and:
 			//case andand:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						it.lhs.regId.id & it.rhs.regId.id, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.AND);
 				break;
 			case sub:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						it.lhs.regId.id - it.rhs.regId.id, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.SUB);
 				break;
 			case xor:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						it.lhs.regId.id ^ it.rhs.regId.id, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.XOR);
 				break;
 			case shl:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						it.lhs.regId.id << it.rhs.regId.id, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.SHL);
 				break;
 			case shr:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						it.lhs.regId.id >> it.rhs.regId.id, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.SHR);
 				break;
 			case mul:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						it.lhs.regId.id * it.rhs.regId.id, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.MUL);
 				break;
 			case div:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						(it.rhs.regId.id != 0) ? it.lhs.regId.id / it.rhs.regId.id : 114514, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.DIV);
 				break;
 			case mod:
+				if (flag){
+					IRRegIdentifier regId = new IRRegIdentifier(
+						(it.rhs.regId.id != 0) ? it.lhs.regId.id % it.rhs.regId.id : 1919810, 8, false);
+					regId.cst = true;
+					regId.val = regId.id;
+					line = new IRLine(lineType.LOAD);	
+					line.args.add(it.regId);
+					line.args.add(regId);
+					currentBlock.lines.add(line);
+					it.regId.cst_agn(regId);
+					return;
+				}
 				line = new IRLine(lineType.MOD);
 		}
 		line.args.add(it.regId);
@@ -791,30 +1015,42 @@ System.out.println("hello");*/
     @Override
     public void visit(literalExprNode it) {
 		it.regId = currentBlock.regIdAllocator.alloc(5);
+		IRRegIdentifier regId;
 		if (it.ctx.literal().True() != null){
 			IRLine line = new IRLine(lineType.LOAD);
+			regId = new IRRegIdentifier(1, 8, false);
+			regId.cst = true;
+			regId.val = 1;
 			line.args.add(it.regId);
-			line.args.add(new IRRegIdentifier(1, 8, false));
+			line.args.add(regId);
 			currentBlock.lines.add(line);
 		}else if (it.ctx.literal().DecimalInteger() != null){
+			regId = new IRRegIdentifier(
+				Integer.parseInt(it.ctx.literal().DecimalInteger().toString()), 8, false);
+			regId.cst = true;
+			regId.val = regId.id;
 			IRLine line = new IRLine(lineType.LOAD);
 			line.args.add(it.regId);
-			line.args.add(new IRRegIdentifier(
-				Integer.parseInt(it.ctx.literal().DecimalInteger().toString()), 8, false));
+			line.args.add(regId);
 			currentBlock.lines.add(line);
 		}else if (it.ctx.literal().StringConstant() != null){
 			IRLine line = new IRLine(lineType.LOADSTRING);
-			line.args.add(it.regId);
 			String s = it.ctx.literal().StringConstant().toString();
-			line.args.add(new IRRegIdentifier(
-				gBList.addString(s.substring(1, s.length() - 1)), 9, false));
+			regId = new IRRegIdentifier(
+				gBList.addString(s.substring(1, s.length() - 1)), 9, false);
+			line.args.add(it.regId);
+			line.args.add(regId);
 			currentBlock.lines.add(line);
 		}else{
+			regId = new IRRegIdentifier(1, 8, false);
+			regId.cst = true;
+			regId.val = 0;
 			IRLine line = new IRLine(lineType.LOAD);
 			line.args.add(it.regId);
-			line.args.add(new IRRegIdentifier(0, 8, false));
+			line.args.add(regId);
 			currentBlock.lines.add(line);
 		}
+		it.regId.cst_agn(regId);
 	}
 
 	@Override

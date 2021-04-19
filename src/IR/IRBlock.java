@@ -808,13 +808,13 @@ public class IRBlock {
 				}			
 			}
 			else if (now_line.lineCode == lineType.BEQ || now_line.lineCode == lineType.BNEQ){ //Branch
-				/*int x = reg_num;
+				int x = reg_num;
 				for (int j = 0; j < now_line.args.size(); j++){
 					IRRegIdentifier regId2 = now_line.args.get(j);
 					if (regId2.typ == 5){
 						active[regId2.id] = true;
 					}
-				}*/
+				}
 			}
 		}
 
@@ -834,7 +834,7 @@ public class IRBlock {
 			};
 		}
 
-		jump_update();
+		/*jump_update();
 		erased = new boolean [lines.size()];
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
@@ -882,18 +882,22 @@ public class IRBlock {
 					active[x] = true;
 				}
 			};
-		}
+		}*/
 
 		ArrayList<IRLine> new_lines = new ArrayList<>();
 
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
-			if (erased[i]) continue;
+			/*if (erased[i]){
+				System.out.println("[DEAD CODE]");
+				now_line.print();
+				continue;
+			}*/
 			if (def_line(now_line.lineCode)){
 				IRRegIdentifier regId = now_line.args.get(0);
 				if (regId.typ == 5 && !active[regId.id]){
-					//System.out.println("[DEAD CODE]");
-					//now_line.print();
+					/*System.out.println("[DEAD CODE]");
+					now_line.print();*/
 					continue;
 				}
 			}
