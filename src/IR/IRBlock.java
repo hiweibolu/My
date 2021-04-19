@@ -761,6 +761,7 @@ public class IRBlock {
 
 	public ArrayList<ArrayList<Integer>> dce_to;
 	public boolean []active;
+	public boolean []erased;
 	public void DCE(){
 		int reg_num = regIdAllocator.size(5);
 		dce_to = new ArrayList<>();
@@ -807,13 +808,13 @@ public class IRBlock {
 				}			
 			}
 			else if (now_line.lineCode == lineType.BEQ || now_line.lineCode == lineType.BNEQ){ //Branch
-				int x = reg_num;
+				/*int x = reg_num;
 				for (int j = 0; j < now_line.args.size(); j++){
 					IRRegIdentifier regId2 = now_line.args.get(j);
 					if (regId2.typ == 5){
 						active[regId2.id] = true;
 					}
-				}
+				}*/
 			}
 		}
 
@@ -833,10 +834,61 @@ public class IRBlock {
 			};
 		}
 
+		jump_update();
+		erased = new boolean [lines.size()];
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			if (now_line.lineCode == lineType.JUMP && jmp_target[i] < i){
+				boolean flag = false;
+				for (int j = jmp_target[i]; j < i; j++){
+					IRLine line = lines.get(j);
+					if (line.lineCode == lineType.CALL || 
+						line.lineCode == lineType.SW || 
+						def_line(line.lineCode) && active[line.args.get(0).id]){
+							flag = true;
+						}
+				}
+				if (!flag){
+					for (int j = jmp_target[i]; j <= i; j++){
+						erased[j] = true;
+					}
+				}
+			}
+		}
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			if (now_line.lineCode == lineType.BEQ || now_line.lineCode == lineType.BNEQ){ //Branch
+				if (erased[i]) continue;
+				int x = reg_num;
+				for (int j = 0; j < now_line.args.size(); j++){
+					IRRegIdentifier regId2 = now_line.args.get(j);
+					if (regId2.typ == 5){
+						active[regId2.id] = true;
+					}
+				}
+			}
+		}
+
+		tail = 0;
+		for (int i = 0; i < reg_num; i++)
+			if (active[i])
+				b[tail++] = i;
+		for (int i = 0; i < tail; i++){
+			int v = b[i];
+			for (int j = 0; j < dce_to.get(v).size(); j++){
+				int x = dce_to.get(v).get(j);
+				if (!active[x]){
+					b[tail++] = x;
+					active[x] = true;
+				}
+			};
+		}
+
 		ArrayList<IRLine> new_lines = new ArrayList<>();
 
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
+			if (erased[i]) continue;
 			if (def_line(now_line.lineCode)){
 				IRRegIdentifier regId = now_line.args.get(0);
 				if (regId.typ == 5 && !active[regId.id]){
