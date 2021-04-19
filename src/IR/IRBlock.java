@@ -1,6 +1,8 @@
 package IR;
 
 import java.util.ArrayList;
+import java.util.PriorityQueue;
+
 import Util.RegIdAllocator;
 import Util.Graph;
 
@@ -581,7 +583,7 @@ public class IRBlock {
 	public int[] reach, t_end, t_begin;
 	int reach_num;
 	public int[] reach_stack, reach_state;
-	int reach_pass(int i){
+	/*int reach_pass(int i){
 		reach_stack = new int[lines.size()];
 		reach_state = new int[lines.size()];
 		reach_num = 0;
@@ -589,21 +591,6 @@ public class IRBlock {
 		while (reach_num > 0){
 			i = reach_stack[reach_num - 1];
 
-			/*if (vis[i] == vis_now){
-				if (now_line.lineCode == lineType.JUMP){
-					if (reach[i] > reach[jmp_target[i]]) reach[i] = reach[jmp_target[i]];
-				}else{
-					if (now_line.lineCode == lineType.BEQ || now_line.lineCode == lineType.BNEQ){
-						if (reach[i] > reach[jmp_target[i]]) reach[i] = reach[jmp_target[i]];
-					}
-					if (i + 1 < lines.size()){
-						if (reach[i] > reach[i + 1]) reach[i] = reach[i + 1];
-					}
-				}
-				//return reach[i];
-				reach_num--;
-				continue;
-			}*/
 			if (reach_state[i] == 0){
 				vis[i] = vis_now;
 				reach[i] = i;
@@ -643,7 +630,7 @@ public class IRBlock {
 			}
 		}
 		return 0;
-	}
+	}*/
 	public void alloc_pass(int i, int id){
 		while (i < lines.size() && vis[i] < vis_now){
 			vis[i] = vis_now;
@@ -706,7 +693,17 @@ public class IRBlock {
 		boolean[] flag = new boolean[regIdAllocator.size(5)];
 		graph = new Graph(regIdAllocator.size(5));
 		vis_now = 1;
-		reach_pass(0);
+		//reach_pass(0);
+		PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
+		for (int i = lines.size() - 1; i >= 0; i--){
+			while (queue.size() > 0 && -queue.peek() >= i) queue.poll();
+			if (queue.size() > 0) reach[i] = -queue.peek();
+			IRLine line = lines.get(i);
+			if (line.lineCode == lineType.JUMP || line.lineCode == lineType.BEQ ||
+				line.lineCode == lineType.BNEQ) 
+					if (jmp_target[i] < i)
+						queue.add(-jmp_target[i]);
+		}
 
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
