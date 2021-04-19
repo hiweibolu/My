@@ -1042,7 +1042,7 @@ System.out.println("hello");*/
 			line.args.add(regId);
 			currentBlock.lines.add(line);
 		}else{
-			regId = new IRRegIdentifier(1, 8, false);
+			regId = new IRRegIdentifier(0, 8, false);
 			regId.cst = true;
 			regId.val = 0;
 			IRLine line = new IRLine(lineType.LOAD);

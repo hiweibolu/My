@@ -37,6 +37,7 @@ public class IRBlockList {
     }
 
 	public void optimize(){
+		//print();
 		blocks.forEach(b -> b.expand_opt());
 		//print();
 		blocks.forEach(b -> b.SSA());
