@@ -922,10 +922,10 @@ public class IRBlock {
 
 	public int totalRAM, realRAM, addrStartLocal;
 	public void calcRAM(){
-		totalRAM = regIdAllocator.size(12) + regIdAllocator.size(7);
+		totalRAM = regIdAllocator.size(12) + regIdAllocator.size(7) + graph.useSaved();
 		addrStartLocal = 0;
-		totalRAM++;
-		addrStartLocal -= 4; // store s0
+		//totalRAM++;
+		addrStartLocal -= 4 * graph.useSaved(); // store s*
 		if (containsCALL){
 			totalRAM++;
 			addrStartLocal -= 4; // store ra
@@ -949,15 +949,19 @@ public class IRBlock {
 		System.out.println(name + ":");
 
 		System.out.println("\taddi\tsp,sp,-" + String.valueOf(realRAM));
-		System.out.println("\tsw\ts0," + String.valueOf(realRAM - 4) + "(sp)");
-		if (containsCALL) System.out.println("\tsw\tra," + String.valueOf(realRAM - 8) + "(sp)");
-		System.out.println("\taddi\ts0,sp," + String.valueOf(realRAM));
+		for (int i = 0; i < graph.useSaved(); i++)
+			System.out.println("\tsw\ts" + i + "," + (realRAM - 4 * (i + 1)) + "(sp)");
+		//System.out.println("\tsw\ts0," + String.valueOf(realRAM - 4) + "(sp)");
+		if (containsCALL) System.out.println("\tsw\tra," + String.valueOf(realRAM - 4 - 4 * graph.useSaved()) + "(sp)");
+		//System.out.println("\taddi\ts0,sp," + String.valueOf(realRAM));
 		
         lines.forEach(l -> l.printASM(this));
 
 		//System.out.println(".LAB" + String.valueOf(returnLabel) + ":");
-		System.out.println("\tlw\ts0," + String.valueOf(realRAM - 4) + "(sp)");
-		if (containsCALL) System.out.println("\tlw\tra," + String.valueOf(realRAM - 8) + "(sp)");
+		for (int i = 0; i < graph.useSaved(); i++)
+			System.out.println("\tlw\ts" + i + "," + (realRAM - 4 * (i + 1)) + "(sp)");
+		//System.out.println("\tlw\ts0," + String.valueOf(realRAM - 4) + "(sp)");
+		if (containsCALL) System.out.println("\tlw\tra," + String.valueOf(realRAM - 4 - 4 * graph.useSaved()) + "(sp)");
 		System.out.println("\taddi\tsp,sp," + String.valueOf(realRAM));
 		System.out.println("\tjr\tra");
 		

@@ -234,13 +234,13 @@ public class IRLine {
 				break;
 			case INDEX:
 				System.out.print("\tslli\t");
-				System.out.print(args.get(2).toASM() + ",");
+				System.out.print("t6,");
 				System.out.print(args.get(2).toASM() + ",");
 				System.out.println(2);
 				System.out.print("\tadd\t");
 				System.out.print(args.get(0).toASM() + ",");
 				System.out.print(args.get(1).toASM() + ",");
-				System.out.println(args.get(2).toASM());
+				System.out.println("t6");
 				break;
 			case LOADSTRING:
 			case LOAD:
@@ -282,16 +282,16 @@ public class IRLine {
 						System.out.println("(" + args.get(1).toASM() + ")");
 						break;
 					case 12:
-						System.out.print(block.addrLocal(args.get(1).id));
-						System.out.println("(s0)");
+						System.out.print(block.addrLocal(args.get(1).id) + block.realRAM);
+						System.out.println("(sp)");
 						break;
 					case 2:
 						System.out.print("%lo(" + args.get(1).toGASM() + ")");
 						System.out.println("(" + args.get(2).toASM() + ")");
 						break;
 					case 4:
-						System.out.print(block.addrParam(args.get(1).id));
-						System.out.println("(s0)");
+						System.out.print(block.addrParam(args.get(1).id) + block.realRAM);
+						System.out.println("(sp)");
 						break;
 					case 7:
 						System.out.print(block.addrParam(args.get(1).id));
@@ -308,16 +308,16 @@ public class IRLine {
 						System.out.println("(" + args.get(1).toASM() + ")");
 						break;
 					case 12:
-						System.out.print(block.addrLocal(args.get(1).id));
-						System.out.println("(s0)");
+						System.out.print(block.addrLocal(args.get(1).id) + block.realRAM);
+						System.out.println("(sp)");
 						break;
 					case 2:
 						System.out.print("%lo(" + args.get(1).toGASM() + ")");
 						System.out.println("(" + args.get(2).toASM() + ")");
 						break;
 					case 4:
-						System.out.print(block.addrParam(args.get(1).id));
-						System.out.println("(s0)");
+						System.out.print(block.addrParam(args.get(1).id) + block.realRAM);
+						System.out.println("(sp)");
 						break;
 				}
 				break;
