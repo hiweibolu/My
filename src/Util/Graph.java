@@ -61,6 +61,8 @@ public class Graph {
 			colored[i] = true;
 		}
 
+		//System.out.println(saved_arr);
+
 		color_arr = new int [n];
 		color_arr_num = 0;
 
@@ -77,7 +79,23 @@ public class Graph {
 				spill_arr.add(i);
 			}
 		}
-		for (int i = 0, head = 0; i < color_arr_num; i++){
+ 
+ 		for (int i = 0, head = 0; ; i++){
+			while (i == color_arr_num && head < spill_arr.size()){
+				int x = spill_arr.get(head++);
+				if (!colored[x] && !spilled[x]){
+					spilled[x] = true;
+					to.get(x).forEach(y -> {
+						if (!colored[y] && !spilled[y]){
+							if (--deg[y] < color.length - normal_color && saved[y]){
+								color_arr[color_arr_num++] = y;
+								colored[y] = true;
+							}
+						}
+					});
+				}
+			}
+			if (i >= color_arr_num) break;
 			int v = color_arr[i];
 			to.get(v).forEach(x -> {
 				if (saved[x] && !colored[x] && !spilled[x]){
@@ -87,24 +105,8 @@ public class Graph {
 					}
 				}
 			});
-			if (i + 1 == color_arr_num){
-				while (head < spill_arr.size()){
-					int x = spill_arr.get(head++);
-					if (!colored[x] && !spilled[x]){
-						spilled[x] = true;
-						to.get(x).forEach(y -> {
-							if (!colored[y] && !spilled[y]){
-								if (--deg[y] < color.length - normal_color && saved[y]){
-									color_arr[color_arr_num++] = y;
-									colored[y] = true;
-								}
-							}
-						});
-						break;
-					}
-				}
-			}
 		}
+
 		for (int i = color_arr_num - 1; i >= 0; i--){
 			int v = color_arr[i];
 			boolean[] used = new boolean[color.length];
@@ -121,6 +123,7 @@ public class Graph {
 		//--------------------------------------------------------------------------
 		// Color saved end
 		//--------------------------------------------------------------------------
+		//for (int i = 0; i < n; i++) System.out.println(i + ":" + deg[i]);
 
 		color_arr_num = 0;
 		spill_arr.clear();
@@ -132,7 +135,22 @@ public class Graph {
 			spill_arr.add(i);
 		}
 		
-		for (int i = 0, head = 0; i < color_arr_num; i++){
+ 		for (int i = 0, head = 0; ; i++){
+			while (i == color_arr_num && head < spill_arr.size()){
+				int x = spill_arr.get(head++);
+				if (!colored[x] && !spilled[x]){
+					spilled[x] = true;
+					to.get(x).forEach(y -> {
+						if (!colored[y] && !spilled[y]){
+							if (--deg[y] < color.length){
+								color_arr[color_arr_num++] = y;
+								colored[y] = true;
+							}
+						}
+					});
+				}
+			}
+			if (i >= color_arr_num) break;
 			int v = color_arr[i];
 			to.get(v).forEach(x -> {
 				if (!colored[x] && !spilled[x]){
@@ -142,25 +160,7 @@ public class Graph {
 					}
 				}
 			});
-			if (i + 1 == color_arr_num){
-				while (head < spill_arr.size()){
-					int x = spill_arr.get(head++);
-					if (!colored[x] && !spilled[x]){
-						spilled[x] = true;
-						to.get(x).forEach(y -> {
-							if (!colored[y] && !spilled[y]){
-								if (--deg[y] < color.length){
-									color_arr[color_arr_num++] = y;
-									colored[y] = true;
-								}
-							}
-						});
-						break;
-					}
-				}
-			}
 		}
-
 		//System.out.println(color_arr_num);
 		for (int i = color_arr_num - 1; i >= 0; i--){
 			int v = color_arr[i];
