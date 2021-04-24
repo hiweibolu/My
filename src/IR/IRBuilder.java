@@ -232,12 +232,23 @@ System.out.println("hello");*/
 		if (it.elseStmt != null) ifElse = labelAlloc();
 
         it.condition.accept(this);
-		IRLine line = new IRLine(lineType.BNEQ);
-		line.args.add(it.condition.regId);
-		line.args.add(new IRRegIdentifier(0, 0, false));
-		if (it.elseStmt != null) line.label = ifElse;
-		else line.label = ifEnd;
-		currentBlock.lines.add(line);
+		IRLine line;
+		if (it.condition.regId.cst){
+			if (it.condition.regId.val == 0){
+				line = new IRLine(lineType.JUMP);
+				if (it.elseStmt != null) line.label = ifElse;
+				else line.label = ifEnd;
+				currentBlock.lines.add(line);
+			}else{
+			}
+		}else{
+			line = new IRLine(lineType.BNEQ);
+			line.args.add(it.condition.regId);
+			line.args.add(new IRRegIdentifier(0, 0, false));
+			if (it.elseStmt != null) line.label = ifElse;
+			else line.label = ifEnd;
+			currentBlock.lines.add(line);
+		}
 
         if (it.thenStmt != null){
 			it.thenStmt.accept(this);
