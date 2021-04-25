@@ -31,7 +31,8 @@ public class IRBuilder implements ASTVisitor {
 	private ArrayList<ASTNode> gVarDefs;
 
 	public int labelAlloc(){
-		return ++labelNumber;
+		//return ++labelNumber;
+		return currentBlock.labelAlloc();
 	}
 
     public IRBuilder(IRBlockList gBList, globalScope gScope) {
@@ -63,6 +64,7 @@ public class IRBuilder implements ASTVisitor {
 		currentBlock.regIdAllocator = it.scope.regIdAllocator;
 		currentBlock.returnLabel = labelAlloc();
 		gBList.blocks.add(currentBlock);
+		currentBlock.id = gBList.blocks.size() - 1;
 		IRLine line = new IRLine(lineType.FUNC);
 		line.func = it.func_name;
 		currentBlock.lines.add(line);
@@ -920,7 +922,7 @@ System.out.println("hello");*/
 				//}
 			if (it.type.isClass() || gBList.class_sizes.containsKey(it.type.name) && it.Exprs.size() == it.type.dimension){
 				IRLine line = new IRLine(lineType.LOAD);
-				line.args.add(new IRRegIdentifier(10, 0, false));
+				line.args.add(new IRRegIdentifier(0, 3, false));
 				line.args.add(new IRRegIdentifier(gBList.class_sizes.get(it.type.name) << 2, 8, false));
 				currentBlock.lines.add(line);
 				

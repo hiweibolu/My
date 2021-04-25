@@ -18,6 +18,7 @@ public class IRLine {
     public ArrayList<IRRegIdentifier> args = new ArrayList<>();
 	public int label = 0;
 	public String func = null;
+	public IRBlock block = null;
 
     public IRLine(lineType lineCode) {
         this.lineCode = lineCode;
@@ -74,15 +75,15 @@ public class IRLine {
 		System.out.println();
 	}
 
-	public String labelASM(){
-		return ".LAB" + String.valueOf(label);
+	public String labelASM(IRBlock block){
+		return ".b" + block.id + "l" + label;
 	}
 
 	public void printASM(IRBlock block){
 		switch (lineCode){
 			case FUNC: break;
 			case LABEL:
-				System.out.println(labelASM() + ":");
+				System.out.println(labelASM(block) + ":");
 				break;
 			case MOVE:
 				System.out.print("\tmv\t");
@@ -90,7 +91,7 @@ public class IRLine {
 				System.out.println(args.get(1).toASM());
 				break;
 			case JUMP:
-				System.out.println("\tj\t" + labelASM());
+				System.out.println("\tj\t" + labelASM(block));
 				break;
 			case CALL:
 				System.out.println("\tcall\t" + func);
@@ -99,13 +100,13 @@ public class IRLine {
 				System.out.print("\tbeq\t");
 				System.out.print(args.get(0).toASM() + ",");
 				System.out.print(args.get(1).toASM() + ",");
-				System.out.println(labelASM());
+				System.out.println(labelASM(block));
 				break;
 			case BEQ:
 				System.out.print("\tbne\t");
 				System.out.print(args.get(0).toASM() + ",");
 				System.out.print(args.get(1).toASM() + ",");
-				System.out.println(labelASM());
+				System.out.println(labelASM(block));
 				break;
 			case NEG:
 				System.out.print("\tneg\t");

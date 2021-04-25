@@ -58,7 +58,6 @@ public class Main {
 			if (!onlySemantic){
             	new IRBuilder(gIRList, gScope).visit(ASTRoot);
 				gIRList.optimize();
-				//gIRList.print();
 				gIRList.printASM();
 
 			}

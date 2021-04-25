@@ -15,8 +15,12 @@ public class IRBlock {
 	public int maxParamsNumber = 0;
 	public String name;
 	public boolean containsCALL = false;
-	public int returnLabel;
+	public int returnLabel, id;
+	public int labelNumber = 0;
 
+	public int labelAlloc(){
+		return labelNumber++;
+	}
     public IRBlock() {
     }
 
@@ -104,13 +108,15 @@ public class IRBlock {
 							if (regId.id < 8){
 								now_line.args.set(0, new IRRegIdentifier(regId.id + 10, 0, false));
 							}else{
+								//System.out.println(regId.id);
 								temp = regIdAllocator.alloc(5);
 								line = new IRLine(lineType.SW);
 								line.args.add(temp);
 								IRRegIdentifier an_temp;
-								if (regIdAllocator.size(7) < regId.id - 7){
+								while (regIdAllocator.size(7) < regId.id - 7){
 									an_temp = regIdAllocator.alloc(7);
-								}else an_temp = new IRRegIdentifier(regId.id - 8, 7, false);
+								}
+								an_temp = new IRRegIdentifier(regId.id - 8, 7, false);
 								line.args.add(an_temp);
 								new_lines.add(line);
 								now_line.args.set(0, temp);
@@ -276,77 +282,6 @@ public class IRBlock {
 			}
 		}
 	}
-	/*public void alloc(){
-		int temp_size = regIdAllocator.size(5);
-		used = new int [temp_size];
-		first_used = new int [temp_size];
-		last_used = new int [temp_size];
-		for (int i = 0; i < lines.size(); i++){
-			IRLine now_line = lines.get(i);
-			for (int j = 0; j < now_line.args.size(); j++){
-				IRRegIdentifier regId = now_line.args.get(j);
-				if (regId.typ == 5){
-					used[regId.id]++;
-					if (first_used[regId.id] == 0) first_used[regId.id] = i;
-					last_used[regId.id] = i;
-				}
-			}
-		}
-		used_reg = new IRRegIdentifier [temp_size];
-		used_l_reg = new IRRegIdentifier [temp_size];
-		for (int i = 0; i < 32; i++) free_reg[i] = 0;
-		for (int i = 10; i <= 15; i++) free_reg[i] = 1;
-		for (int i = 0; i < lines.size(); i++){
-			IRLine now_line = lines.get(i);
-			
-			switch (now_line.lineCode){
-				default:
-				case LW:
-					easyAlloc(now_line, 1, now_line.args.size());
-					easyRelease(now_line, 1, now_line.args.size());
-					IRRegIdentifier temp = now_line.args.get(0);
-					if (temp.typ == 3){
-						if (temp.id < 6){
-							free_reg[temp.id + 10] = 0;
-							now_line.args.set(0, new IRRegIdentifier(temp.id + 10, 0, false));
-						}else{
-							now_line.args.set(0, regIdAllocator.alloc(7));
-						}
-					}else{
-						easyAlloc(now_line, 0, 1);
-						easyRelease(now_line, 0, 1);
-					}
-					break;
-				case BNEQ:
-				case BEQ:
-				case SW:
-					easyAlloc(now_line, 0, now_line.args.size());
-					easyRelease(now_line, 0, now_line.args.size());
-					break;
-				case CALL:
-					for (int j = 0; j < temp_size; j++){
-						if (used[j] > 0){
-							if (used_reg[j] != null){
-								//System.out.println("hello");
-								IRRegIdentifier new_reg = regIdAllocator.alloc(1);
-								used_reg[j].id = new_reg.id;
-								used_reg[j].typ = new_reg.typ;
-								used_reg[j].pointer = new_reg.pointer;
-								used[j] = 0;
-							}
-						}
-					}
-					for (int j = 10; j <= 15; j++){
-						free_reg[j] = 1;
-					}
-					break;
-				case FUNC:
-				case LABEL:
-				case JUMP:
-				case RETURN:
-			}
-		}
-	}*/
 	public void allocLocal(){
 		int temp_size = regIdAllocator.size(5);
 		used = new int [temp_size];
@@ -463,6 +398,91 @@ public class IRBlock {
 		}
 	}
 	public void expand_opt(){
+		ArrayList<IRLine> new_lines = new ArrayList<>();
+		ArrayList<IRLine> param_lines = new ArrayList<>();
+		containsCALL = false;
+		IRRegIdentifier call_result = null;
+		for (int i = 0; i < lines.size(); i++){
+			IRLine line = lines.get(i);
+			if (line.lineCode == lineType.CALL){
+				if (line.block != null &&
+					line.block.lines.size() <= 100 && line.block.containsCALL == false &&
+					line.block != this){
+					IRRegIdentifier[] t_id = new IRRegIdentifier [line.block.regIdAllocator.size(5)];
+					Integer[] l_id = new Integer [line.block.labelNumber];
+					int j = 0, param_number = 0;
+					for (;param_number < param_lines.size(); param_number++){
+						//System.out.println(lines.get(0).func + " : " + param_number + " / " + param_lines.size());
+						IRLine param_line = line.block.lines.get(j);
+						while (param_line.lineCode != lineType.MOVE){
+							j++;
+							param_line = line.block.lines.get(j);
+						}
+						//System.out.println(param_line.args.get(0).id);
+						t_id[param_line.args.get(0).id] = param_lines.get(param_lines.size() - param_number - 1).args.get(1);
+						j++;
+					}
+					param_lines.clear();
+					call_result = regIdAllocator.alloc(5);
+					for (;j < line.block.lines.size(); j++){
+						IRLine old_line = line.block.lines.get(j);
+						IRLine new_line = new IRLine(old_line.lineCode);
+						if (old_line.lineCode == lineType.FUNC);
+						else{
+							if (old_line.lineCode == lineType.BNEQ || old_line.lineCode == lineType.BEQ ||
+								old_line.lineCode == lineType.JUMP || old_line.lineCode == lineType.LABEL){
+									if (l_id[old_line.label] == null){
+										l_id[old_line.label] = labelAlloc();
+									}
+									new_line.label = l_id[old_line.label];
+								}
+							for (int k = 0; k < old_line.args.size(); k++){
+								IRRegIdentifier regId = old_line.args.get(k);
+								if (regId.typ == 5){
+									if (t_id[regId.id] == null){
+										t_id[regId.id] = regIdAllocator.alloc(5);
+									}
+									regId = t_id[regId.id];
+								}
+								new_line.args.add(regId);
+							}
+							if (old_line.lineCode == lineType.MOVE){
+								if (old_line.args.get(0).typ == 0 && old_line.args.get(0).id == 10){
+									new_line.args.set(0, call_result);
+								}
+							}
+							new_line.func = old_line.func;
+							new_lines.add(new_line);
+						}
+					}
+				}else{
+					containsCALL = true;
+					if (param_lines.size() > 0){
+						new_lines.addAll(param_lines);
+						param_lines.clear();
+					}
+					new_lines.add(line);
+				}
+			}else{
+				if (line.lineCode == lineType.MOVE){
+					if (line.args.get(0).typ == 3){
+						param_lines.add(line);
+					}
+					else
+					if (call_result != null && line.args.get(1).typ == 0 && line.args.get(1).id == 10){
+						line.args.set(1, call_result);
+						new_lines.add(line);
+						call_result = null;
+					}
+					else{
+						new_lines.add(line);
+					}
+				}else{
+					new_lines.add(line);
+				}
+			}
+		}
+		lines = new_lines;
 		jump_update();
 	}
 
@@ -582,55 +602,63 @@ public class IRBlock {
 	public Graph graph;
 	public int[] reach, t_end, t_begin;
 	int reach_num;
-	public int[] reach_stack, reach_state;
-	/*int reach_pass(int i){
-		reach_stack = new int[lines.size()];
-		reach_state = new int[lines.size()];
-		reach_num = 0;
-		reach_stack[reach_num++] = i;
-		while (reach_num > 0){
-			i = reach_stack[reach_num - 1];
+	public int[] reach_dad, reach_state;
+	public ArrayList<ArrayList<Integer>> reach_to;
 
-			if (reach_state[i] == 0){
-				vis[i] = vis_now;
-				reach[i] = i;
-				IRLine now_line = lines.get(i);
-				if (now_line.lineCode == lineType.JUMP){
-					if (vis[jmp_target[i]] < vis_now) reach_stack[reach_num++] = jmp_target[i];
-					reach_state[i] = 1;
-				}else{
-					if (now_line.lineCode == lineType.BEQ || now_line.lineCode == lineType.BNEQ){
-						if (vis[jmp_target[i]] < vis_now) reach_stack[reach_num++] = jmp_target[i];
-						reach_state[i] = 2;
-						continue;
-					}
-					if (i + 1 < lines.size()){
-						if (vis[i + 1] < vis_now) reach_stack[reach_num++] = i + 1;
-						reach_state[i] = 3;
-						continue;
-					}
-					reach_state[i] = 4;
+	public void reach_pass(int id){
+		int[] b = new int [lines.size()];
+		int tail = 0;
+
+		for (int i = t_begin[id] + 1; i <= t_end[id]; i++){
+			IRLine now_line = lines.get(i);
+			int j = use_line(now_line.lineCode);
+			for (; j != -1 && j < now_line.args.size(); j++){
+				IRRegIdentifier regId = now_line.args.get(j);
+				if (regId.typ == 5 && id == regId.id){
+					reach[i] = vis_now;
+					b[tail++] = i;
 				}
-			}else if (reach_state[i] == 1){
-				if (reach[i] > reach[jmp_target[i]]) reach[i] = reach[jmp_target[i]];
-				reach_state[i] = 4;
-			}else if (reach_state[i] == 2){
-				if (reach[i] > reach[jmp_target[i]]) reach[i] = reach[jmp_target[i]];
-				if (i + 1 < lines.size()){
-					if (vis[i + 1] < vis_now) reach_stack[reach_num++] = i + 1;
-					reach_state[i] = 3;
-					continue;
-				}
-				reach_state[i] = 4;
-			}else if (reach_state[i] == 3){
-				if (reach[i] > reach[i + 1]) reach[i] = reach[i + 1];
-				reach_state[i] = 4;
-			}else{
-				reach_num --;
 			}
 		}
-		return 0;
-	}*/
+
+		for (int i = 0; i < tail; i++){
+			int v = b[i];
+			for (int j = 0; j < reach_to.get(v).size(); j++){
+				int x = reach_to.get(v).get(j);
+				if (reach[x] < vis_now && x != t_begin[id]){
+					reach[x] = vis_now;
+					b[tail++] = x;
+				}
+			}
+		}
+
+		for (int i = 0; i < tail; i++){
+			IRLine now_line = lines.get(b[i]);
+			if (now_line.lineCode == lineType.CALL){
+				graph.saved[id] = true;
+			}
+			int j = use_line(now_line.lineCode);
+			for (; j != -1 && j < now_line.args.size(); j++){
+				IRRegIdentifier regId = now_line.args.get(j);
+				if (regId.typ == 5)
+					graph.add(id, regId.id);
+				else if (regId.typ == 0 && regId.id >= 10){
+					graph.add(id, regId.id - 10 + regIdAllocator.size(5));
+				}
+			}
+			if (def_line(now_line.lineCode) && reach[b[i] + 1] == vis_now){
+				IRRegIdentifier regId = now_line.args.get(0);
+				if (regId.typ == 5){
+					graph.add(id, regId.id);
+				}
+				else if (regId.typ == 0 && regId.id >= 10){
+					graph.add(id, regId.id - 10 + regIdAllocator.size(5));
+				}
+			}
+
+		}
+	}
+
 	public void alloc_pass(int i, int id){
 		while (i < lines.size() && vis[i] < vis_now){
 			vis[i] = vis_now;
@@ -645,7 +673,7 @@ public class IRBlock {
 					graph.add(id, regId.id - 10 + regIdAllocator.size(5));
 				}
 			}
-			if (i >= t_end[id] && reach[i] < t_begin[id] || reach[i] >= t_end[id]){
+			if (reach[i] < vis_now){
 				break;
 			}
 			if (def_line(now_line.lineCode)){
@@ -688,13 +716,15 @@ public class IRBlock {
 
 		vis = new int[lines.size()];
 		reach = new int[lines.size()];
+		reach_state = new int[lines.size()];
+		reach_dad = new int[lines.size()];
 		t_end = new int[regIdAllocator.size(5)];
 		t_begin = new int[regIdAllocator.size(5)];
 		boolean[] flag = new boolean[regIdAllocator.size(5)];
 		graph = new Graph(regIdAllocator.size(5));
 		vis_now = 1;
 		//reach_pass(0);
-		PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
+		/*PriorityQueue<Integer> queue = new PriorityQueue<Integer>();
 		for (int i = lines.size() - 1; i >= 0; i--){
 			while (queue.size() > 0 && -queue.peek() >= i) queue.poll();
 			if (queue.size() > 0) reach[i] = -queue.peek();
@@ -703,7 +733,19 @@ public class IRBlock {
 				line.lineCode == lineType.BNEQ) 
 					if (jmp_target[i] < i)
 						queue.add(-jmp_target[i]);
+		}*/
+
+		reach_to = new ArrayList<>();
+		for (int i = 0; i < lines.size(); i++) reach_to.add(new ArrayList<>());
+		for (int i = 0; i < lines.size(); i++){
+			IRLine line = lines.get(i);
+			if (line.lineCode == lineType.JUMP || line.lineCode == lineType.BEQ ||
+				line.lineCode == lineType.BNEQ){
+					reach_to.get(jmp_target[i]).add(i);
+				}
+			if (line.lineCode != lineType.JUMP && i + 1 < lines.size()) reach_to.get(i + 1).add(i);
 		}
+
 
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
@@ -722,7 +764,8 @@ public class IRBlock {
 						flag[regId.id] = true;
 						t_begin[regId.id] = i;
 						vis_now++;
-						alloc_pass(i + 1, regId.id);
+						reach_pass(regId.id);
+						//alloc_pass(i + 1, regId.id);
 					}
 				}else if (regId.typ == 0){
 					//System.out.println(regId.id + " " + (regId.id - 10 + regIdAllocator.size(5)));
