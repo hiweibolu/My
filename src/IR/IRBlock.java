@@ -1018,12 +1018,13 @@ public class IRBlock {
 		new_lines = new ArrayList<>();
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
-			if (now_line.lineCode == lineType.ADDI && now_line.args.get(1).typ == 5){
+			if (now_line.lineCode == lineType.ADDI && now_line.args.get(1).typ == 5 &&
+				!now_line.args.get(1).equals(now_line.args.get(0))){
 				IRLine last_line = new_lines.get(new_lines.size() - 1);
 				if (last_line.lineCode == lineType.ADDI){
 					IRRegIdentifier regId = last_line.args.get(0);
 					IRRegIdentifier regId1 = now_line.args.get(1);
-					if (regId.equals(regId1)){
+					if (regId.equals(regId1) && !regId.equals(last_line.args.get(1))){
 						IRLine line = new IRLine(lineType.ADDI);
 						line.args.add(now_line.args.get(0));
 						line.args.add(last_line.args.get(1));
