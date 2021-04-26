@@ -10,7 +10,7 @@ public class Graph {
 	public boolean[] saved;
 
     public Graph(int n) {
-		this.n = n + 8;
+		this.n = n + c.length;
 		for (int i = 0; i < this.n; i++) to.add(new ArrayList<>());
 		saved = new boolean[this.n];
     }
@@ -26,7 +26,7 @@ public class Graph {
 	public boolean[] spilled, colored;
 	public int max_color = 0, normal_color = 13;
 	public int[] color = {10, 11, 12, 13, 14, 15, 16, 17, 5, 6, 7, 28, 29, 8, 9, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27};
-	//public int[] color = {10, 11, 12, 13, 14, 15, 16, 17, 5, 6, 7, 28, 29};
+	public int[] c = {10, 11, 12, 13, 14, 15, 16, 17, 5, 6};
 	public int[] val;
 	public void work(){
 		for (int i = 0; i < n; i++){
@@ -56,8 +56,8 @@ public class Graph {
 				});
 			}
 		}
-		for (int i = n - 8; i < n; i++){
-			val[i] = i - (n - 8);
+		for (int i = n - c.length; i < n; i++){
+			val[i] = i - (n - c.length);
 			colored[i] = true;
 		}
 

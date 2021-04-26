@@ -16,10 +16,10 @@ public class IRLine {
 	}
 	public lineType lineCode;
     public ArrayList<IRRegIdentifier> args = new ArrayList<>();
-	public int label = 0;
+	public int label = 0, add_up = 0;
 	public String func = null;
 	public IRBlock block = null;
-	public boolean expanded = false;
+	public boolean expanded = false, calling = false, ignored = false;
 
     public IRLine(lineType lineCode) {
         this.lineCode = lineCode;

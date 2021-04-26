@@ -12,7 +12,7 @@ public class IRBlock {
 
     public ArrayList<IRLine> lines = new ArrayList<>();
     public RegIdAllocator regIdAllocator = null;
-	public int maxParamsNumber = 0;
+	public int maxParamsNumber = 0, args_num = 0;
 	public String name;
 	public boolean containsCALL = false, call_self = false, all_return = false;
 	public int returnLabel, id;
@@ -62,12 +62,13 @@ public class IRBlock {
 								break;
 							case 1:
 							case 4:
-								temp = regIdAllocator.alloc(5);
+								/*temp = regIdAllocator.alloc(5);
 								line = new IRLine(lineType.LW);
 								line.args.add(temp);
 								line.args.add(regId);
 								new_lines.add(line);
-								now_line.args.set(j, temp);
+								now_line.args.set(j, temp);*/
+								now_line.lineCode = lineType.LW;
 								break;
 							case 2:
 								if (now_line.expanded) break;
@@ -386,12 +387,12 @@ public class IRBlock {
 	public boolean[] local_vis;
 	public void jump_update(){
 		jmp_target = new int[lines.size()];
-		int max_label = 0;
+		/*int max_label = 0;
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
 			if (now_line.lineCode == lineType.LABEL && max_label < now_line.label) max_label = now_line.label;
-		}
-		label_target = new int[max_label + 1];
+		}*/
+		label_target = new int[labelNumber + 1];
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
 			if (now_line.lineCode == lineType.LABEL){
@@ -401,7 +402,8 @@ public class IRBlock {
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
 			if (now_line.lineCode == lineType.JUMP || now_line.lineCode == lineType.BEQ || now_line.lineCode == lineType.BNEQ){
-				jmp_target[i] = label_target[now_line.label];
+				if (now_line.calling) jmp_target[i] = label_target[0];
+				else jmp_target[i] = label_target[now_line.label];
 			}
 		}
 	}
@@ -414,19 +416,40 @@ public class IRBlock {
 			IRLine line = lines.get(i);
 			if (line.lineCode == lineType.CALL){
 				if (line.block != null &&
-					line.block.lines.size() <= 100 && line.block.containsCALL == false &&
+					line.block.lines.size() <= 200 && line.block.containsCALL == false &&
 					line.block != this){
 					IRRegIdentifier[] t_id = new IRRegIdentifier [line.block.regIdAllocator.size(5)];
 					Integer[] l_id = new Integer [line.block.labelNumber];
-					int j = 0, param_number = 0;
+					int j = 1, param_number = 0;
 					for (;param_number < param_lines.size(); param_number++){
 						//System.out.println(lines.get(0).func + " : " + param_number + " / " + param_lines.size());
 						//System.out.println(line.func + " "  + line.block.lines.size());
 						IRLine param_line = line.block.lines.get(j);
-						while (param_line.lineCode != lineType.MOVE){
+						/*while (param_line.lineCode != lineType.MOVE){
+							{
+								IRLine new_line = new IRLine(param_line.lineCode); 
+								if (param_line.lineCode == lineType.LABEL){
+									if (l_id[param_line.label] == null){
+										l_id[param_line.label] = labelAlloc();
+									}
+									new_line.label = l_id[param_line.label];
+								}else{
+									for (int k = 0; k < param_line.args.size(); k++){
+										IRRegIdentifier regId = param_line.args.get(k);
+										if (regId.typ == 5){
+											if (t_id[regId.id] == null){
+												t_id[regId.id] = regIdAllocator.alloc(5);
+											}
+											regId = t_id[regId.id];
+										}
+										new_line.args.add(regId);
+									}
+								}
+								new_lines.add(new_line);
+							}
 							j++;
 							param_line = line.block.lines.get(j);
-						}
+						}*/
 						//System.out.println(param_line.args.get(0).id);
 						//param_lines.get(param_lines.size() - param_number - 1).args.get(1).print();
 						IRRegIdentifier paramReg = param_lines.get(param_lines.size() - param_number - 1).args.get(1);
@@ -645,7 +668,8 @@ public class IRBlock {
 			int v = b[i];
 			for (int j = 0; j < reach_to.get(v).size(); j++){
 				int x = reach_to.get(v).get(j);
-				if (reach[x] < vis_now && x != t_begin[id]){
+				IRLine line = lines.get(x);
+				if (reach[x] < vis_now && !(def_line(line.lineCode) && line.args.get(0).typ == 5 && line.args.get(0).id == id)){
 					reach[x] = vis_now;
 					b[tail++] = x;
 				}
@@ -726,7 +750,7 @@ public class IRBlock {
 				IRRegIdentifier regId = now_line.args.get(j);
 				if (regId.typ == 5) graph.add(id, regId.id);
 			}
-			if (now_line.lineCode == lineType.CALL) break;
+			if (now_line.lineCode == lineType.CALL || now_line.calling) break;
 			i++;
 		}
 	}
@@ -777,6 +801,7 @@ public class IRBlock {
 		}
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
+			if (now_line.ignored) continue;
 			if (def_line(now_line.lineCode)){
 				IRRegIdentifier regId = now_line.args.get(0);
 				if (regId.typ == 5){
@@ -814,6 +839,8 @@ public class IRBlock {
 					}else{
 						now_line.args.set(j, new IRRegIdentifier(graph.getColor(id), 0, false));
 					}
+				}else if (regId.typ == 0 && regId.id >= 10){
+					regId.id = graph.c[regId.id - 10];
 				}
 			}
 		}
@@ -1055,7 +1082,7 @@ public class IRBlock {
 			if (now_line.lineCode == lineType.LABEL){
 				IRLine last_line = new_lines.get(new_lines.size() - 1);
 				if (last_line.lineCode == lineType.JUMP){
-					if (last_line.label == now_line.label){
+					if (last_line.label == now_line.label && now_line.label != 0){
 						used_jmp[now_line.label]--;
 						new_lines.set(new_lines.size() - 1, now_line);
 					}else{
@@ -1101,7 +1128,137 @@ public class IRBlock {
 	}
 
 	public void inline_self(){
+		//print();
+		//System.out.println("=========== " + lines.get(0).func + " ===========");
+		boolean flag = false, add_flag = false;
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			if (now_line.lineCode == lineType.CALL){
+				//System.out.println(i);
+				if (now_line.block != this) return;
+				//System.out.println(i);
+				flag = true;
+				if (i + 3 < lines.size() && lines.get(i + 3).lineCode == lineType.JUMP &&
+					lines.get(i + 3).label == 0){
+						//System.out.println("no addup");
+						continue;
+					}
+				if (i + 4 < lines.size() && lines.get(i + 4).lineCode == lineType.JUMP &&
+					lines.get(i + 4).label == 0){
+						if (lines.get(i + 2).lineCode == lineType.ADDI &&
+							lines.get(i + 2).args.get(0).equals(lines.get(i + 3).args.get(1)) &&
+							lines.get(i + 2).args.get(1).equals(lines.get(i + 1).args.get(0))){
+								//System.out.println("addup");
+								add_flag = true;
+								now_line.add_up = lines.get(i + 2).args.get(2).id;
+								continue;
+							}
+						else return;
+					}
+				return;
+			}
+		}
+		if (flag && args_num <= 10){
+			//print();
+			int back_lab = labelAlloc();
+			IRRegIdentifier[] param_reg = new IRRegIdentifier[args_num];
+			IRRegIdentifier[] temp_reg = new IRRegIdentifier[args_num];
+			ArrayList<IRLine> new_lines = new ArrayList<>();
+
+			for (int i = 0; i < args_num; i++) temp_reg[i] = regIdAllocator.alloc(5);
+
+			IRLine line = null;
+			IRRegIdentifier counter = null;
+			if (add_flag){
+				counter = regIdAllocator.alloc(5);
+			}
+			for (int i = 0; i < lines.size(); i++){
+				IRLine now_line = lines.get(i);
+				if (now_line.lineCode == lineType.CALL){
+					for (int j = args_num - 1; j >= 0; j--){
+						line = new IRLine(lineType.MOVE);
+						line.args.add(param_reg[j]);
+						line.args.add(temp_reg[j]);
+						new_lines.add(line);
+					}
+					if (now_line.add_up != 0){
+						line = new IRLine(lineType.ADDI);
+						line.args.add(counter);
+						line.args.add(counter);
+						line.args.add(new IRRegIdentifier(now_line.add_up, 8, false));
+						new_lines.add(line);
+					}
+					line = new IRLine(lineType.JUMP);
+					line.label = back_lab;
+					//line.calling = true;
+					new_lines.add(line);
+					//new_lines.add(now_line);
+				}else{
+					if (i <= args_num){
+						if (i > 0){
+							param_reg[i - 1] = now_line.args.get(0);
+						}
+					}else{
+						if (now_line.lineCode == lineType.MOVE && now_line.args.get(0).typ == 3){
+							/*IRRegIdentifier temp = regIdAllocator.alloc(5);
+							line = new IRLine(lineType.MOVE);
+							line.args.add(temp);
+							line.args.add(now_line.args.get(1));
+							new_lines.add(line);*/
+							now_line.args.set(0, temp_reg[now_line.args.get(0).id]);
+							//now_line.args.set(0, new IRRegIdentifier(now_line.args.get(0).id + 10, 0, false));
+							//now_line.args.set(1, temp);
+						}
+						/*if (now_line.lineCode == lineType.MOVE && now_line.args.get(1).typ == 4){
+							now_line.args.set(1, new IRRegIdentifier(now_line.args.get(1).id + 18, 0, false));
+						}*/
+						if (add_flag && now_line.lineCode == lineType.MOVE && now_line.args.get(0).typ == 0 && now_line.args.get(0).id == 10){
+							IRRegIdentifier temp = regIdAllocator.alloc(5);
+							line = new IRLine(lineType.ADD);
+							line.args.add(temp);
+							line.args.add(now_line.args.get(1));
+							line.args.add(counter);
+							new_lines.add(line);
+							now_line.args.set(1, temp);
+						}
+
+					}
+					new_lines.add(now_line);
+					if (i == args_num){
+						if (add_flag){
+							line = new IRLine(lineType.MOVE);
+							line.args.add(counter);
+							line.args.add(new IRRegIdentifier(0, 0, false));
+							new_lines.add(line);
+						}
+						line = new IRLine(lineType.LABEL);
+						line.label = back_lab;
+						new_lines.add(line);
+					}
+					/*if (i == 0){
+						for (int j = 8; j < args_num; j++){
+							line = new IRLine(lineType.MOVE);
+							line.args.add(new IRRegIdentifier(10 + j, 0, false));
+							line.args.add(new IRRegIdentifier(j - 8, 4, false));
+							new_lines.add(line);
+						}
+					}*/
+				}
+			}
+			/*if (add_flag){
+				line = new IRLine(lineType.ADD);
+				line.args.add(new IRRegIdentifier(10, 0, false));
+				line.args.add(new IRRegIdentifier(10, 0, false));
+				line.args.add(counter);
+				new_lines.add(line);
+			}*/
+			lines = new_lines;
+			all_return = true;
+			//print();
+			containsCALL = false;
+		}
 	}
+	public int[] c = {10, 11, 12, 13, 14, 15, 16, 17, 5, 6};
 
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	// Optimize End

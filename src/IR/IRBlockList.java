@@ -65,9 +65,11 @@ public class IRBlockList {
 					block.containsCALL = true;
 					if (block_map.containsKey(line.func)){
 						int x = block_map.get(line.func);
-						calls.get(i).add(x);
-						calleds.get(x).add(i);
 						line.block = blocks.get(x);
+						if (i != x){
+							calls.get(i).add(x);
+							calleds.get(x).add(i);
+						}
 					}
 				}
 			}
@@ -108,6 +110,7 @@ public class IRBlockList {
 			b.unused_move();
 			//b.print();
 			b.make_addi();
+			//b.print();
 			b.inline_self();
 			//b.print();
 			b.jump_update();
@@ -116,13 +119,14 @@ public class IRBlockList {
 			//b.DCE();
 			//b.print();
 		});
-		//print();
+		//blocks.forEach(b -> b.print());
 		blocks.forEach(b -> b.DCE());
 		blocks.forEach(b -> b.graphColor());
 		blocks.forEach(b -> b.remove());
 		blocks.forEach(b -> b.expandLocal());
 		blocks.forEach(b -> b.allocLocal());
 		blocks.forEach(b -> b.calcRAM());
+		//blocks.forEach(b -> b.print());
 		//blocks.forEach(b -> b.print());
 		/*blocks.forEach(b -> b.expand_opt());
 		blocks.forEach(b -> b.SSA());

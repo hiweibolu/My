@@ -77,6 +77,7 @@ public class IRBuilder implements ASTVisitor {
 				else line.args.add(new IRRegIdentifier(i - 8, 4, false));
 				currentBlock.lines.add(line);
 			}
+			currentBlock.args_num = it.funcParams.size();
 
 			inMainInit = true;
 			if (it.name.equals("main")) gVarDefs.forEach(d -> d.accept(this));
@@ -107,6 +108,7 @@ public class IRBuilder implements ASTVisitor {
 				else line.args.add(new IRRegIdentifier(i + 1 - 8, 4, false));
 				currentBlock.lines.add(line);
 			}
+			currentBlock.args_num = it.funcParams.size() + 1;
 			it.block.accept(this);
 		}
 		line = new IRLine(lineType.LABEL);
