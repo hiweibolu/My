@@ -103,8 +103,14 @@ public class IRBlockList {
 		blocks.forEach(b -> {
 			//b.print();
 			b.expand_opt();
+			b.unused_jump();
 			//b.print();
-			//b.jump_update();
+			b.unused_move();
+			//b.print();
+			b.make_addi();
+			b.inline_self();
+			//b.print();
+			b.jump_update();
 			b.SSA();
 			b.expand();
 			//b.DCE();

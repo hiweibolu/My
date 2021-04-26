@@ -23,6 +23,9 @@ public class IRRegIdentifier{
 		cst = other.cst;
 		val = other.val;
 	}
+	public boolean equals(IRRegIdentifier other){
+		return id == other.id && typ == other.typ;
+	}
 
 	public void print(){
 		//if (pointer) System.out.print("*");

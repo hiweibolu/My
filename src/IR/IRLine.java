@@ -270,10 +270,18 @@ public class IRLine {
 				break;
 			case RETURN: System.out.print("\tRETURN"); break;
 			case ADDI:
-				System.out.print("\taddi\t");
-				System.out.print(args.get(0).toASM() + ",");
-				System.out.print(args.get(1).toASM() + ",");
-				System.out.println(args.get(2).id);
+				if (args.get(2).id > 1000 || args.get(2).id < -1000){
+					System.out.println("\tli\tt6," + args.get(2).id);
+					System.out.print("\tadd\t");
+					System.out.print(args.get(0).toASM() + ",");
+					System.out.print(args.get(1).toASM() + ",");
+					System.out.println("t6");
+				}else{
+					System.out.print("\taddi\t");
+					System.out.print(args.get(0).toASM() + ",");
+					System.out.print(args.get(1).toASM() + ",");
+					System.out.println(args.get(2).id);
+				}
 				break;
 			case SW:
 				System.out.print("\tsw\t");
