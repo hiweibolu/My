@@ -19,6 +19,7 @@ public class IRLine {
 	public int label = 0;
 	public String func = null;
 	public IRBlock block = null;
+	public boolean expanded = false;
 
     public IRLine(lineType lineCode) {
         this.lineCode = lineCode;

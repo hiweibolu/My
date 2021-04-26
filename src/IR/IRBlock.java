@@ -33,6 +33,10 @@ public class IRBlock {
 		ArrayList<IRLine> new_lines = new ArrayList<>();
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
+			/*if (now_line.expanded){
+				new_lines.add(now_line);
+				continue;
+			}*/
 			int j = 0;
 			boolean no_need_add = false;
 			switch (now_line.lineCode){
@@ -48,6 +52,7 @@ public class IRBlock {
 						IRRegIdentifier temp;
 						switch (regId.typ){
 							case 6:
+								//if (now_line.expanded) break;
 								temp = regIdAllocator.alloc(5);
 								line = new IRLine(lineType.LW);
 								line.args.add(temp);
@@ -65,6 +70,7 @@ public class IRBlock {
 								now_line.args.set(j, temp);
 								break;
 							case 2:
+								if (now_line.expanded) break;
 								temp = regIdAllocator.alloc(5);
 								line = new IRLine(lineType.LOAD);
 								line.args.add(temp);
@@ -123,6 +129,7 @@ public class IRBlock {
 							}
 							break;
 						case 6:
+							//if (now_line.expanded) break;
 							temp = regIdAllocator.alloc(5);
 							line = new IRLine(lineType.SW);
 							line.args.add(temp);
@@ -140,6 +147,7 @@ public class IRBlock {
 							now_line.args.set(0, temp);
 							break;
 						case 2:
+							if (now_line.expanded) break;
 							temp = regIdAllocator.alloc(5);
 							temp2 = regIdAllocator.alloc(5);
 							line = new IRLine(lineType.LOAD);
@@ -419,7 +427,17 @@ public class IRBlock {
 							param_line = line.block.lines.get(j);
 						}
 						//System.out.println(param_line.args.get(0).id);
-						t_id[param_line.args.get(0).id] = param_lines.get(param_lines.size() - param_number - 1).args.get(1);
+						//param_lines.get(param_lines.size() - param_number - 1).args.get(1).print();
+						IRRegIdentifier paramReg = param_lines.get(param_lines.size() - param_number - 1).args.get(1);
+						if (paramReg.typ == 2){
+							IRRegIdentifier temp = regIdAllocator.alloc(5);
+							IRLine new_line = new IRLine(lineType.MOVE);
+							new_line.args.add(temp);
+							new_line.args.add(paramReg);
+							new_lines.add(new_line);
+							paramReg = temp;
+						}
+						t_id[param_line.args.get(0).id] = paramReg;
 						j++;
 					}
 					param_lines.clear();
@@ -452,6 +470,7 @@ public class IRBlock {
 								}
 							}
 							new_line.func = old_line.func;
+							new_line.expanded = true;
 							new_lines.add(new_line);
 						}
 					}
