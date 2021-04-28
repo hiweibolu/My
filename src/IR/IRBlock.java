@@ -1007,10 +1007,14 @@ public class IRBlock {
 	}
 
 	public void make_addi(){
-		//print();
 		ArrayList<IRLine> new_lines = new ArrayList<>();
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
+			if (def_line(now_line.lineCode) && now_line.args.get(0).typ != 5){
+				new_lines.add(now_line);
+				continue;
+			}
+			//now_line.print();
 			if (now_line.lineCode == lineType.ADD/* && 
 				now_line.args.get(0).typ == 5 && now_line.args.get(1).typ == 5 && now_line.args.get(2).typ == 5*/){
 				IRLine last_line = new_lines.get(new_lines.size() - 1);
@@ -1030,6 +1034,110 @@ public class IRBlock {
 						line.args.add(now_line.args.get(0));
 						line.args.add(regId1);
 						line.args.add(last_line.args.get(1));
+						new_lines.set(new_lines.size() - 1, line);
+					}else{
+						new_lines.add(now_line);
+					}
+				}else{
+					new_lines.add(now_line);
+				}
+			}else if (now_line.lineCode == lineType.MUL){
+				IRLine last_line = new_lines.get(new_lines.size() - 1);
+				if (last_line.lineCode == lineType.LOAD &&
+					last_line.args.get(0).typ == 5 && last_line.args.get(1).typ == 8){
+					IRRegIdentifier regId = last_line.args.get(0);
+					IRRegIdentifier regId1 = now_line.args.get(1);
+					IRRegIdentifier regId2 = now_line.args.get(2);
+					if (regId.equals(regId1)){
+						IRLine line = new IRLine(lineType.MULI);
+						line.args.add(now_line.args.get(0));
+						line.args.add(regId2);
+						line.args.add(last_line.args.get(1));
+						new_lines.set(new_lines.size() - 1, line);
+					}else if (regId.equals(regId2)){
+						IRLine line = new IRLine(lineType.MULI);
+						line.args.add(now_line.args.get(0));
+						line.args.add(regId1);
+						line.args.add(last_line.args.get(1));
+						new_lines.set(new_lines.size() - 1, line);
+					}else{
+						new_lines.add(now_line);
+					}
+				}else{
+					new_lines.add(now_line);
+				}
+			}else if (now_line.lineCode == lineType.LE){
+				IRLine last_line = new_lines.get(new_lines.size() - 1);
+				if (last_line.lineCode == lineType.LOAD &&
+					last_line.args.get(0).typ == 5 && last_line.args.get(1).typ == 8){
+					IRRegIdentifier regId = last_line.args.get(0);
+					IRRegIdentifier regId1 = now_line.args.get(1);
+					IRRegIdentifier regId2 = now_line.args.get(2);
+					if (regId.equals(regId2)){
+						IRLine line = new IRLine(lineType.SLTI);
+						line.args.add(now_line.args.get(0));
+						line.args.add(regId1);
+						line.args.add(last_line.args.get(1));
+						new_lines.set(new_lines.size() - 1, line);
+					}else{
+						new_lines.add(now_line);
+					}
+				}else{
+					new_lines.add(now_line);
+				}
+			}else if (now_line.lineCode == lineType.MOVE){
+				IRLine last_line = new_lines.get(new_lines.size() - 1);
+				if (last_line.lineCode == lineType.LOAD &&
+					last_line.args.get(0).typ == 5 && last_line.args.get(1).typ == 8){
+					IRRegIdentifier regId = last_line.args.get(0);
+					IRRegIdentifier regId1 = now_line.args.get(1);
+					if (regId.equals(regId1)){
+						IRLine line = new IRLine(lineType.LOAD);
+						line.args.add(now_line.args.get(0));
+						line.args.add(last_line.args.get(1));
+						new_lines.set(new_lines.size() - 1, line);
+					}else{
+						new_lines.add(now_line);
+					}
+				}else{
+					new_lines.add(now_line);
+				}
+			}else if (now_line.lineCode == lineType.AND){
+				IRLine last_line = new_lines.get(new_lines.size() - 1);
+				if (last_line.lineCode == lineType.LOAD &&
+					last_line.args.get(0).typ == 5 && last_line.args.get(1).typ == 8){
+					IRRegIdentifier regId = last_line.args.get(0);
+					IRRegIdentifier regId1 = now_line.args.get(1);
+					IRRegIdentifier regId2 = now_line.args.get(2);
+					if (regId.equals(regId1)){
+						IRLine line = new IRLine(lineType.ANDI);
+						line.args.add(now_line.args.get(0));
+						line.args.add(regId2);
+						line.args.add(last_line.args.get(1));
+						new_lines.set(new_lines.size() - 1, line);
+					}else if (regId.equals(regId2)){
+						IRLine line = new IRLine(lineType.ANDI);
+						line.args.add(now_line.args.get(0));
+						line.args.add(regId1);
+						line.args.add(last_line.args.get(1));
+						new_lines.set(new_lines.size() - 1, line);
+					}else{
+						new_lines.add(now_line);
+					}
+				}else{
+					new_lines.add(now_line);
+				}
+			}else if (now_line.lineCode == lineType.EQ){
+				IRLine last_line = new_lines.get(new_lines.size() - 1);
+				if (last_line.lineCode == lineType.LOAD &&
+					last_line.args.get(0).typ == 5 && last_line.args.get(1).typ == 8){
+					IRRegIdentifier regId = last_line.args.get(0);
+					IRRegIdentifier regId1 = now_line.args.get(2);
+					if (regId.equals(regId1)){
+						IRLine line = new IRLine(lineType.EQI);
+						line.args.add(now_line.args.get(0));
+						line.args.add(now_line.args.get(1));
+						line.args.add(new IRRegIdentifier(-last_line.args.get(1).id, 8, false));
 						new_lines.set(new_lines.size() - 1, line);
 					}else{
 						new_lines.add(now_line);
@@ -1259,6 +1367,64 @@ public class IRBlock {
 		}
 	}
 	public int[] c = {10, 11, 12, 13, 14, 15, 16, 17, 5, 6};
+
+	public void LICM(){
+		//print();
+		jump_update();
+		int[] def_times = new int[regIdAllocator.size(5)];
+		ArrayList<ArrayList<IRLine>> licm_lines = new ArrayList<>();
+		boolean[] removed = new boolean[lines.size()];
+		for (int i = 0; i < lines.size(); i++) licm_lines.add(new ArrayList<>());
+		for (int i = lines.size() - 1; i >= 0; i--){
+			IRLine line = lines.get(i);
+			if (line.lineCode == lineType.JUMP && jmp_target[i] < i){
+				for (int j = jmp_target[i]; j < i; j++){
+					IRLine now_line = lines.get(j);
+					if (def_line(now_line.lineCode) && !removed[j]){
+						IRRegIdentifier regId = now_line.args.get(0);
+						if (regId.typ == 5){
+							def_times[regId.id]++;
+						}
+					}
+				}
+				for (int j = jmp_target[i]; j < i; j++){
+					IRLine now_line = lines.get(j);
+					if (def_line(now_line.lineCode) && now_line.lineCode != lineType.LOAD){
+						IRRegIdentifier regId = now_line.args.get(0);
+						if (regId.typ == 5 && def_times[regId.id] == 1 && !removed[j]){
+							boolean flag = true;
+							for (int k = 1; k < now_line.args.size(); k++){
+								IRRegIdentifier temp = now_line.args.get(k);
+								if (temp.typ == 5 && def_times[temp.id] == 0 || temp.typ == 8);
+								else flag = false;
+							}
+							if (flag && licm_lines.get(jmp_target[i]).size() < 4){
+								licm_lines.get(jmp_target[i]).add(now_line);
+								removed[j] = true;
+								def_times[regId.id]--;
+								/*System.out.println("=====remove=====");
+								now_line.print();
+								System.out.println("=====removed=====");*/
+							}
+						}
+					}
+				}
+				for (int j = jmp_target[i]; j < i; j++){
+					IRLine now_line = lines.get(j);
+					if (def_line(now_line.lineCode)){
+						def_times[now_line.args.get(0).id] = 0;
+					}
+				}
+			}
+		}
+		ArrayList<IRLine> new_lines = new ArrayList<>();
+		for (int i = 0; i < lines.size(); i++){
+			new_lines.addAll(licm_lines.get(i));
+			if (!removed[i]) new_lines.add(lines.get(i));
+		}
+		lines = new_lines;
+		//print();
+	}
 
 	//----------------------------------------------------------------------------------------------------------------------------------------------
 	// Optimize End

@@ -121,6 +121,7 @@ public class IRBlockList {
 		});
 		//blocks.forEach(b -> b.print());
 		blocks.forEach(b -> b.DCE());
+		blocks.forEach(b -> b.LICM());
 		blocks.forEach(b -> b.graphColor());
 		blocks.forEach(b -> b.remove());
 		blocks.forEach(b -> b.expandLocal());

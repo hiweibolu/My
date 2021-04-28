@@ -12,7 +12,7 @@ public class IRLine {
 		ADD, SUB, MUL, DIV, MOD,
 		OR, AND, XOR, SHL, SHR,
 		INDEX, LOAD, LOADSTRING, RETURN,
-		ADDI, LW, SW
+		ADDI, ANDI, SLTI, EQI, MULI, LW, SW
 	}
 	public lineType lineCode;
     public ArrayList<IRRegIdentifier> args = new ArrayList<>();
@@ -57,6 +57,10 @@ public class IRLine {
 			case LOADSTRING: System.out.print("\tLOADSTRING"); break;
 			case RETURN: System.out.print("\tRETURN"); break;
 			case ADDI: System.out.print("\tADDI"); break;
+			case SLTI: System.out.print("\tSLTI"); break;
+			case ANDI: System.out.print("\tANDI"); break;
+			case MULI: System.out.print("\tMULI"); break;
+			case EQI: System.out.print("\tEQI"); break;
 			case LW: System.out.print("\tLW"); break;
 			case SW: System.out.print("\tSW"); break;
 		}
@@ -270,7 +274,7 @@ public class IRLine {
 				break;
 			case RETURN: System.out.print("\tRETURN"); break;
 			case ADDI:
-				if (args.get(2).id > 1000 || args.get(2).id < -1000){
+				if (args.get(2).id > 2000 || args.get(2).id < -2000){
 					System.out.println("\tli\tt6," + args.get(2).id);
 					System.out.print("\tadd\t");
 					System.out.print(args.get(0).toASM() + ",");
@@ -281,6 +285,61 @@ public class IRLine {
 					System.out.print(args.get(0).toASM() + ",");
 					System.out.print(args.get(1).toASM() + ",");
 					System.out.println(args.get(2).id);
+				}
+				break;
+			case SLTI:
+				if (args.get(2).id > 2000 || args.get(2).id < -2000){
+					System.out.println("\tli\tt6," + args.get(2).id);
+					System.out.print("\tslt\t");
+					System.out.print(args.get(0).toASM() + ",");
+					System.out.print(args.get(1).toASM() + ",");
+					System.out.println("t6");
+				}else{
+					System.out.print("\tslti\t");
+					System.out.print(args.get(0).toASM() + ",");
+					System.out.print(args.get(1).toASM() + ",");
+					System.out.println(args.get(2).id);
+				}
+				break;
+			case ANDI:
+				if (args.get(2).id > 2000 || args.get(2).id < -2000){
+					System.out.println("\tli\tt6," + args.get(2).id);
+					System.out.print("\tand\t");
+					System.out.print(args.get(0).toASM() + ",");
+					System.out.print(args.get(1).toASM() + ",");
+					System.out.println("t6");
+				}else{
+					System.out.print("\tandi\t");
+					System.out.print(args.get(0).toASM() + ",");
+					System.out.print(args.get(1).toASM() + ",");
+					System.out.println(args.get(2).id);
+				}
+				break;
+			case MULI:
+				System.out.println("\tli\tt6," + args.get(2).id);
+				System.out.print("\tmul\t");
+				System.out.print(args.get(0).toASM() + ",");
+				System.out.print(args.get(1).toASM() + ",");
+				System.out.println("t6");
+				break;
+			case EQI:
+				if (args.get(2).id > 2000 || args.get(2).id < -2000){
+					System.out.println("\tli\tt6," + args.get(2).id);
+					System.out.print("\tadd\t");
+					System.out.print("t5" + ",");
+					System.out.print(args.get(1).toASM() + ",");
+					System.out.println("t6");
+					System.out.print("\tseqz\t");
+					System.out.print(args.get(0).toASM() + ",");
+					System.out.println("t5");
+				}else{
+					System.out.print("\taddi\t");
+					System.out.print("t5" + ",");
+					System.out.print(args.get(1).toASM() + ",");
+					System.out.println(args.get(2).id);
+					System.out.print("\tseqz\t");
+					System.out.print(args.get(0).toASM() + ",");
+					System.out.println("t5");
 				}
 				break;
 			case SW:

@@ -982,40 +982,45 @@ System.out.println("hello");*/
 		line.args.add(new IRRegIdentifier(10, 0, false));
 		currentBlock.lines.add(line);
 
-		int loopStart = labelAlloc(), loopEnd = labelAlloc();
-		line = new IRLine(lineType.LABEL);
-		line.label = loopStart;
-		currentBlock.lines.add(line);
-		line = new IRLine(lineType.BNEQ);
-		line.args.add(iter);
-		line.args.add(new IRRegIdentifier(0, 0, false));
-		line.label = loopEnd;
-		currentBlock.lines.add(line);
+		if (i < it.Exprs.size() - 1 || 
+			it.type.isClass() || gBList.class_sizes.containsKey(it.type.name) && it.Exprs.size() == it.type.dimension){
+			int loopStart = labelAlloc(), loopEnd = labelAlloc();
+			line = new IRLine(lineType.LABEL);
+			line.label = loopStart;
+			currentBlock.lines.add(line);
+			line = new IRLine(lineType.BNEQ);
+			line.args.add(iter);
+			line.args.add(new IRRegIdentifier(0, 0, false));
+			line.label = loopEnd;
+			currentBlock.lines.add(line);
 
-		IRRegIdentifier next_result = newMalloc(it, i + 1);
-		IRRegIdentifier result = currentBlock.regIdAllocator.alloc(5);
-		line = new IRLine(lineType.INDEX);
-		line.args.add(result);
-		line.args.add(nowRegId);
-		line.args.add(iter);
-		currentBlock.lines.add(line);
-		
-		line = new IRLine(lineType.MOVE);
-		line.args.add(new IRRegIdentifier(result.id, result.typ, true));
-		line.args.add(next_result);
-		currentBlock.lines.add(line);
-		line = new IRLine(lineType.ADDI);
-		line.args.add(iter);
-		line.args.add(iter);
-		line.args.add(new IRRegIdentifier(-1, 8, false));
-		currentBlock.lines.add(line);
-		line = new IRLine(lineType.JUMP);
-		line.label = loopStart;
-		currentBlock.lines.add(line);
+			IRRegIdentifier next_result = newMalloc(it, i + 1);
+			
+			if (!next_result.equals(new IRRegIdentifier(0, 0, false))){
+				IRRegIdentifier result = currentBlock.regIdAllocator.alloc(5);
+				line = new IRLine(lineType.INDEX);
+				line.args.add(result);
+				line.args.add(nowRegId);
+				line.args.add(iter);
+				currentBlock.lines.add(line);
+				line = new IRLine(lineType.MOVE);
+				line.args.add(new IRRegIdentifier(result.id, result.typ, true));
+				line.args.add(next_result);
+				currentBlock.lines.add(line);
+			}
+			line = new IRLine(lineType.ADDI);
+			line.args.add(iter);
+			line.args.add(iter);
+			line.args.add(new IRRegIdentifier(-1, 8, false));
+			currentBlock.lines.add(line);
+			line = new IRLine(lineType.JUMP);
+			line.label = loopStart;
+			currentBlock.lines.add(line);
 
-		line = new IRLine(lineType.LABEL);
-		line.label = loopEnd;
-		currentBlock.lines.add(line);
+			line = new IRLine(lineType.LABEL);
+			line.label = loopEnd;
+			currentBlock.lines.add(line);
+		}
 
 		return nowRegId;
 	}
