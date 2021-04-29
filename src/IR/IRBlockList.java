@@ -103,7 +103,9 @@ public class IRBlockList {
 	public void optimize(){
 		toposort();
 		blocks.forEach(b -> {
-			//b.expand_opt();
+			//b.print();
+			b.expand_opt();
+			//b.print();
 			b.unused_jump();
 			b.unused_move();
 			b.make_addi();
@@ -111,6 +113,7 @@ public class IRBlockList {
 			b.jump_update();
 			b.SSA();
 			b.expand();
+			//b.print();
 		});
 		blocks.forEach(b -> b.DCE());
 		blocks.forEach(b -> b.LICM());

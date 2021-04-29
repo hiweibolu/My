@@ -462,7 +462,7 @@ public class IRBlock {
 						//System.out.println(param_line.args.get(0).id);
 						//param_lines.get(param_lines.size() - param_number - 1).args.get(1).print();
 						IRRegIdentifier paramReg = param_lines.get(param_lines.size() - param_number - 1).args.get(1);
-						if (paramReg.typ == 2){
+						if (/*paramReg.typ == 2 || paramReg.typ == 1 || paramReg.typ == 5*/true){
 							IRRegIdentifier temp = regIdAllocator.alloc(5);
 							IRLine new_line = new IRLine(lineType.MOVE);
 							new_line.args.add(temp);
