@@ -2,6 +2,7 @@ package IR;
 
 import java.util.ArrayList;
 import java.util.PriorityQueue;
+import java.util.HashMap;
 
 import Util.RegIdAllocator;
 import Util.Graph;
@@ -73,16 +74,17 @@ public class IRBlock {
 							case 2:
 								if (now_line.expanded) break;
 								temp = regIdAllocator.alloc(5);
+								IRRegIdentifier temp1 = regIdAllocator.alloc(5);
 								line = new IRLine(lineType.LOAD);
 								line.args.add(temp);
 								line.args.add(regId);
 								new_lines.add(line);
 								line = new IRLine(lineType.LW);
-								line.args.add(temp);
+								line.args.add(temp1);
 								line.args.add(regId);
 								line.args.add(temp);
 								new_lines.add(line);
-								now_line.args.set(j, temp);
+								now_line.args.set(j, temp1);
 								break;
 							case 9:
 								/*temp = regIdAllocator.alloc(5);
@@ -1380,6 +1382,9 @@ public class IRBlock {
 		//print();
 		jump_update();
 		int[] def_times = new int[regIdAllocator.size(5)];
+		//int[] global_times = new int[regIdAllocator.size(2)];
+		HashMap<Integer, Integer> global_times = new HashMap<>();
+
 		ArrayList<ArrayList<IRLine>> licm_lines = new ArrayList<>();
 		boolean[] removed = new boolean[lines.size()];
 		for (int i = 0; i < lines.size(); i++) licm_lines.add(new ArrayList<>());
@@ -1393,17 +1398,23 @@ public class IRBlock {
 						if (regId.typ == 5){
 							def_times[regId.id]++;
 						}
+					}else if (now_line.lineCode == lineType.SW){
+						IRRegIdentifier regId = now_line.args.get(1);
+						if (regId.typ == 2){
+							if (!global_times.containsKey(regId.id)) global_times.put(regId.id, 1);
+						}
 					}
 				}
 				for (int j = jmp_target[i]; j < i; j++){
 					IRLine now_line = lines.get(j);
-					if (def_line(now_line.lineCode) && now_line.lineCode != lineType.LOAD){
+					if (def_line(now_line.lineCode) && (now_line.lineCode != lineType.LOAD || now_line.args.get(1).typ == 2)){
 						IRRegIdentifier regId = now_line.args.get(0);
 						if (regId.typ == 5 && def_times[regId.id] == 1 && !removed[j]){
 							boolean flag = true;
 							for (int k = 1; k < now_line.args.size(); k++){
 								IRRegIdentifier temp = now_line.args.get(k);
-								if (temp.typ == 5 && def_times[temp.id] == 0 || temp.typ == 8);
+								if (temp.typ == 5 && def_times[temp.id] == 0 || temp.typ == 8 || 
+									temp.typ == 2 && !global_times.containsKey(temp.id));
 								else flag = false;
 							}
 							if (flag && licm_lines.get(jmp_target[i]).size() < 4){
@@ -1423,6 +1434,7 @@ public class IRBlock {
 						def_times[now_line.args.get(0).id] = 0;
 					}
 				}
+				global_times.clear();
 			}
 		}
 		ArrayList<IRLine> new_lines = new ArrayList<>();
