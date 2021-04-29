@@ -500,6 +500,11 @@ public class IRBlock {
 										lc_id[regId.id] = regIdAllocator.alloc(1);
 									}
 									regId = lc_id[regId.id];
+								}else if (regId.typ == 6){
+									if (t_id[regId.id] == null){
+										t_id[regId.id] = regIdAllocator.alloc(5);
+									}
+									regId = new IRRegIdentifier(t_id[regId.id].id, 6, false);
 								}
 								new_line.args.add(regId);
 							}
@@ -1166,10 +1171,32 @@ public class IRBlock {
 			}
 		}
 		lines = new_lines;
+
+		jump_update();
+		t_end = new int[regIdAllocator.size(1)];
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			for (int j = 0; j < now_line.args.size(); j++){
+				if (now_line.args.get(j).typ == 1){
+					t_end[now_line.args.get(j).id] = i;
+				}
+			}
+		}
+		int[] t_reach = new int[lines.size()];
+		for (int i = lines.size() - 1; i >= 0; i--){
+			IRLine now_line = lines.get(i);
+			t_reach[i] = i;
+			if (i + 1 < lines.size() && t_reach[i + 1] < t_reach[i])
+				t_reach[i] = t_reach[i + 1];
+			if (jmp_target[i] != 0 && jmp_target[i] < t_reach[i])
+				t_reach[i] = jmp_target[i];
+		}
+
 		new_lines = new ArrayList<>();
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
-			if (now_line.lineCode == lineType.ADDI && now_line.args.get(1).typ == 5 &&
+			if (now_line.lineCode == lineType.ADDI && (now_line.args.get(1).typ == 5 || now_line.args.get(1).typ == 1 && 
+				t_reach[i] == i && t_end[now_line.args.get(1).id] == i) &&
 				!now_line.args.get(1).equals(now_line.args.get(0))){
 				IRLine last_line = new_lines.get(new_lines.size() - 1);
 				if (last_line.lineCode == lineType.ADDI){
@@ -1233,13 +1260,51 @@ public class IRBlock {
 	}
 
 	public void unused_move(){
+		jump_update();
+		int[] lc_end = new int[regIdAllocator.size(1)];
+		t_end = new int[regIdAllocator.size(5)];
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			for (int j = 0; j < now_line.args.size(); j++){
+				if (now_line.args.get(j).typ == 5){
+					t_end[now_line.args.get(j).id] = i;
+				}else if (now_line.args.get(j).typ == 1){
+					lc_end[now_line.args.get(j).id] = i;
+				}
+			}
+		}
+		int[] t_reach = new int[lines.size()];
+		for (int i = lines.size() - 1; i >= 0; i--){
+			IRLine now_line = lines.get(i);
+			t_reach[i] = i;
+			if (i + 1 < lines.size() && t_reach[i + 1] < t_reach[i])
+				t_reach[i] = t_reach[i + 1];
+			if (jmp_target[i] != 0 && jmp_target[i] < t_reach[i])
+				t_reach[i] = jmp_target[i];
+		}
+
+		/*print();
+		for (int i = 0; i < t_end.length; i++) System.out.print(t_end[i] + " ");
+		System.out.println();
+		for (int i = 0; i < t_reach.length; i++) System.out.print(t_reach[i] + " ");
+		System.out.println();*/
 		ArrayList<IRLine> new_lines = new ArrayList<>();
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
 			if (now_line.lineCode == lineType.MOVE && 
-				now_line.args.get(0).typ == 5 && now_line.args.get(1).typ == 5){
+				(now_line.args.get(0).typ == 5 || now_line.args.get(0).typ == 1)){
 				IRLine last_line = new_lines.get(new_lines.size() - 1);
-				if (def_line(last_line.lineCode) && last_line.args.get(0).equals(now_line.args.get(1))){
+				IRRegIdentifier regId = now_line.args.get(1);
+				if (def_line(last_line.lineCode) && last_line.args.get(0).equals(regId) && 
+					(regId.typ == 5 && t_reach[i] == i && t_end[regId.id] == i
+					|| regId.typ == 1 && t_reach[i] == i && lc_end[regId.id] == i)){
+/*if (now_line.args.get(0).typ == 1){
+	last_line.print();
+	now_line.print();
+	System.out.println("===============");
+	print();
+	System.out.println("===============");
+}*/
 					last_line.args.set(0, now_line.args.get(0));
 				}else{
 					new_lines.add(now_line);
