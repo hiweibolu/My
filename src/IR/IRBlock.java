@@ -131,12 +131,19 @@ public class IRBlock {
 							break;
 						case 6:
 							//if (now_line.expanded) break;
-							temp = regIdAllocator.alloc(5);
-							line = new IRLine(lineType.SW);
-							line.args.add(temp);
-							line.args.add(new IRRegIdentifier(regId.id, 5, false));
-							new_lines.add(line);
-							now_line.args.set(0, temp);
+							if (now_line.lineCode == lineType.MOVE && now_line.args.get(1).typ == 5){
+								line = new IRLine(lineType.SW);
+								line.args.add(now_line.args.get(1));
+								line.args.add(new IRRegIdentifier(regId.id, 5, false));
+								new_lines.set(new_lines.size() - 1, line);
+							}else{
+								temp = regIdAllocator.alloc(5);
+								line = new IRLine(lineType.SW);
+								line.args.add(temp);
+								line.args.add(new IRRegIdentifier(regId.id, 5, false));
+								new_lines.add(line);
+								now_line.args.set(0, temp);
+							}
 							break;
 						case 1:
 						case 4:
@@ -1007,6 +1014,7 @@ public class IRBlock {
 	}
 
 	public void make_addi(){
+		//print();
 		ArrayList<IRLine> new_lines = new ArrayList<>();
 		for (int i = 0; i < lines.size(); i++){
 			IRLine now_line = lines.get(i);
@@ -1411,7 +1419,7 @@ public class IRBlock {
 				}
 				for (int j = jmp_target[i]; j < i; j++){
 					IRLine now_line = lines.get(j);
-					if (def_line(now_line.lineCode)){
+					if (def_line(now_line.lineCode) && now_line.args.get(0).typ == 5){
 						def_times[now_line.args.get(0).id] = 0;
 					}
 				}
