@@ -134,6 +134,11 @@ public class Graph {
 			}
 			spill_arr.add(i);
 		}
+		spill_arr.sort((Integer a, Integer b) -> {
+			if (deg[a] < deg[b]) return 1;
+			else if (deg[a] == deg[b]) return 0;
+			return -1;
+		});
 		
  		for (int i = 0, head = 0; ; i++){
 			while (i == color_arr_num && head < spill_arr.size()){

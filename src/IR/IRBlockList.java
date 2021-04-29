@@ -104,7 +104,7 @@ public class IRBlockList {
 		toposort();
 		blocks.forEach(b -> {
 			//b.print();
-			b.expand_opt();
+			//b.expand_opt();
 			b.unused_jump();
 			//b.print();
 			b.unused_move();
