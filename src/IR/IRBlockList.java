@@ -103,23 +103,15 @@ public class IRBlockList {
 	public void optimize(){
 		toposort();
 		blocks.forEach(b -> {
-			//b.print();
 			//b.expand_opt();
 			b.unused_jump();
-			//b.print();
 			b.unused_move();
-			//b.print();
 			b.make_addi();
-			//b.print();
 			b.inline_self();
-			//b.print();
 			b.jump_update();
 			b.SSA();
 			b.expand();
-			//b.DCE();
-			//b.print();
 		});
-		//blocks.forEach(b -> b.print());
 		blocks.forEach(b -> b.DCE());
 		blocks.forEach(b -> b.LICM());
 		blocks.forEach(b -> b.graphColor());
@@ -127,27 +119,7 @@ public class IRBlockList {
 		blocks.forEach(b -> b.expandLocal());
 		blocks.forEach(b -> b.allocLocal());
 		blocks.forEach(b -> b.calcRAM());
-		//blocks.forEach(b -> b.print());
-		//blocks.forEach(b -> b.print());
-		/*blocks.forEach(b -> b.expand_opt());
-		blocks.forEach(b -> b.SSA());
-		blocks.forEach(b -> b.expand());
-		blocks.forEach(b -> b.DCE());
-		blocks.forEach(b -> b.graphColor());
-		blocks.forEach(b -> b.remove());
-		blocks.forEach(b -> b.expandLocal());
-		blocks.forEach(b -> b.allocLocal());
-		blocks.forEach(b -> b.calcRAM());*/
 	}
-
-	/*public void initASM(){
-		blocks.forEach(b -> b.expand());
-		blocks.forEach(b -> b.alloc());
-		blocks.forEach(b -> b.expandLocal());
-		blocks.forEach(b -> b.allocLocal());
-		blocks.forEach(b -> b.remove());
-		blocks.forEach(b -> b.calcRAM());
-	}*/
 
 	public void printASM(){
 		if (strings.size() > 0 || globals.size() > 0){

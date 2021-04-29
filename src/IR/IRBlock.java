@@ -1391,6 +1391,7 @@ public class IRBlock {
 		for (int i = lines.size() - 1; i >= 0; i--){
 			IRLine line = lines.get(i);
 			if (line.lineCode == lineType.JUMP && jmp_target[i] < i){
+				boolean have_call = false;
 				for (int j = jmp_target[i]; j < i; j++){
 					IRLine now_line = lines.get(j);
 					if (def_line(now_line.lineCode) && !removed[j]){
@@ -1403,9 +1404,12 @@ public class IRBlock {
 						if (regId.typ == 2){
 							if (!global_times.containsKey(regId.id)) global_times.put(regId.id, 1);
 						}
+					}else if (now_line.lineCode == lineType.CALL){
+						have_call = true;
+						break;
 					}
 				}
-				for (int j = jmp_target[i]; j < i; j++){
+				if (!have_call) for (int j = jmp_target[i]; j < i; j++){
 					IRLine now_line = lines.get(j);
 					if (def_line(now_line.lineCode) && (now_line.lineCode != lineType.LOAD || now_line.args.get(1).typ == 2)){
 						IRRegIdentifier regId = now_line.args.get(0);
@@ -1428,6 +1432,7 @@ public class IRBlock {
 						}
 					}
 				}
+
 				for (int j = jmp_target[i]; j < i; j++){
 					IRLine now_line = lines.get(j);
 					if (def_line(now_line.lineCode) && now_line.args.get(0).typ == 5){
