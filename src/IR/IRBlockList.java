@@ -108,8 +108,8 @@ public class IRBlockList {
 			b.unused_move();
 			b.make_addi();
 			b.inline_self();
-			b.jump_update();
 		});
+		blocks.forEach(b -> b.jump_update());
 		blocks.forEach(b -> b.SSA());
 		blocks.forEach(b -> b.expand());
 		blocks.forEach(b -> b.DCE());

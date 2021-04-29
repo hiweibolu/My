@@ -475,7 +475,6 @@ public class IRBlock {
 						j++;
 					}
 					param_lines.clear();
-					call_result = regIdAllocator.alloc(1);
 					for (;j < line.block.lines.size(); j++){
 						IRLine old_line = line.block.lines.get(j);
 						IRLine new_line = new IRLine(old_line.lineCode);
@@ -510,6 +509,8 @@ public class IRBlock {
 							}
 							if (old_line.lineCode == lineType.MOVE){
 								if (old_line.args.get(0).typ == 0 && old_line.args.get(0).id == 10){
+									if (call_result == null)
+										call_result = regIdAllocator.alloc(1);
 									new_line.args.set(0, call_result);
 								}
 							}
