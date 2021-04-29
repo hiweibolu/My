@@ -72,7 +72,7 @@ public class IRBlock {
 								now_line.lineCode = lineType.LW;
 								break;
 							case 2:
-								if (now_line.expanded) break;
+								//if (now_line.expanded) break;
 								temp = regIdAllocator.alloc(5);
 								IRRegIdentifier temp1 = regIdAllocator.alloc(5);
 								line = new IRLine(lineType.LOAD);
@@ -157,7 +157,7 @@ public class IRBlock {
 							now_line.args.set(0, temp);
 							break;
 						case 2:
-							if (now_line.expanded) break;
+							//if (now_line.expanded) break;
 							temp = regIdAllocator.alloc(5);
 							temp2 = regIdAllocator.alloc(5);
 							line = new IRLine(lineType.LOAD);
@@ -428,6 +428,7 @@ public class IRBlock {
 					line.block.lines.size() <= 200 && line.block.containsCALL == false &&
 					line.block != this){
 					IRRegIdentifier[] t_id = new IRRegIdentifier [line.block.regIdAllocator.size(5)];
+					IRRegIdentifier[] lc_id = new IRRegIdentifier [line.block.regIdAllocator.size(1)];
 					Integer[] l_id = new Integer [line.block.labelNumber];
 					int j = 1, param_number = 0;
 					for (;param_number < param_lines.size(); param_number++){
@@ -463,18 +464,18 @@ public class IRBlock {
 						//param_lines.get(param_lines.size() - param_number - 1).args.get(1).print();
 						IRRegIdentifier paramReg = param_lines.get(param_lines.size() - param_number - 1).args.get(1);
 						if (/*paramReg.typ == 2 || paramReg.typ == 1 || paramReg.typ == 5*/true){
-							IRRegIdentifier temp = regIdAllocator.alloc(5);
+							IRRegIdentifier temp = regIdAllocator.alloc(1);
 							IRLine new_line = new IRLine(lineType.MOVE);
 							new_line.args.add(temp);
 							new_line.args.add(paramReg);
 							new_lines.add(new_line);
 							paramReg = temp;
 						}
-						t_id[param_line.args.get(0).id] = paramReg;
+						lc_id[param_line.args.get(0).id] = paramReg;
 						j++;
 					}
 					param_lines.clear();
-					call_result = regIdAllocator.alloc(5);
+					call_result = regIdAllocator.alloc(1);
 					for (;j < line.block.lines.size(); j++){
 						IRLine old_line = line.block.lines.get(j);
 						IRLine new_line = new IRLine(old_line.lineCode);
@@ -494,6 +495,11 @@ public class IRBlock {
 										t_id[regId.id] = regIdAllocator.alloc(5);
 									}
 									regId = t_id[regId.id];
+								}else if (regId.typ == 1){
+									if (lc_id[regId.id] == null){
+										lc_id[regId.id] = regIdAllocator.alloc(1);
+									}
+									regId = lc_id[regId.id];
 								}
 								new_line.args.add(regId);
 							}
@@ -1283,12 +1289,12 @@ public class IRBlock {
 			IRRegIdentifier[] temp_reg = new IRRegIdentifier[args_num];
 			ArrayList<IRLine> new_lines = new ArrayList<>();
 
-			for (int i = 0; i < args_num; i++) temp_reg[i] = regIdAllocator.alloc(5);
+			for (int i = 0; i < args_num; i++) temp_reg[i] = regIdAllocator.alloc(1);
 
 			IRLine line = null;
 			IRRegIdentifier counter = null;
 			if (add_flag){
-				counter = regIdAllocator.alloc(5);
+				counter = regIdAllocator.alloc(1);
 			}
 			for (int i = 0; i < lines.size(); i++){
 				IRLine now_line = lines.get(i);

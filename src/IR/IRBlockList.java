@@ -109,12 +109,14 @@ public class IRBlockList {
 			b.unused_jump();
 			b.unused_move();
 			b.make_addi();
-			b.inline_self();
+			//b.inline_self();
 			b.jump_update();
-			b.SSA();
-			b.expand();
+			//b.SSA();
+			//b.expand();
 			//b.print();
 		});
+		blocks.forEach(b -> b.SSA());
+		blocks.forEach(b -> b.expand());
 		blocks.forEach(b -> b.DCE());
 		blocks.forEach(b -> b.LICM());
 		blocks.forEach(b -> b.graphColor());
