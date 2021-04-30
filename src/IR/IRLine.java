@@ -6,7 +6,7 @@ public class IRLine {
 
     public enum lineType{
 		FUNC, LABEL, MOVE, JUMP, CALL,
-		BNEQ, BEQ,
+		BNEQ, BEQ, BLE, BLT, BGE, BGT,
 		NEG, NOT, LOGICNOT,
 		EQ, NEQ, GE, GEQ, LE, LEQ,
 		ADD, SUB, MUL, DIV, MOD,
@@ -33,6 +33,10 @@ public class IRLine {
 			case CALL: System.out.print("\tCALL"); break;
 			case BNEQ: System.out.print("\tBNEQ"); break;
 			case BEQ: System.out.print("\tBEQ"); break;
+			case BLE: System.out.print("\tBLE"); break;
+			case BLT: System.out.print("\tBLT"); break;
+			case BGE: System.out.print("\tBGE"); break;
+			case BGT: System.out.print("\tBGT"); break;
 			case NEG: System.out.print("\tNEG"); break;
 			case NOT: System.out.print("\tNOT"); break;
 			case LOGICNOT: System.out.print("\tLOGICNOT"); break;
@@ -111,6 +115,30 @@ public class IRLine {
 				System.out.print("\tbne\t");
 				System.out.print(args.get(0).toASM() + ",");
 				System.out.print(args.get(1).toASM() + ",");
+				System.out.println(labelASM(block));
+				break;
+			case BLE:
+				System.out.print("\tbge\t");
+				System.out.print(args.get(1).toASM() + ",");
+				System.out.print(args.get(0).toASM() + ",");
+				System.out.println(labelASM(block));
+				break;
+			case BLT:
+				System.out.print("\tblt\t");
+				System.out.print(args.get(0).toASM() + ",");
+				System.out.print(args.get(1).toASM() + ",");
+				System.out.println(labelASM(block));
+				break;
+			case BGE:
+				System.out.print("\tbge\t");
+				System.out.print(args.get(0).toASM() + ",");
+				System.out.print(args.get(1).toASM() + ",");
+				System.out.println(labelASM(block));
+				break;
+			case BGT:
+				System.out.print("\tblt\t");
+				System.out.print(args.get(1).toASM() + ",");
+				System.out.print(args.get(0).toASM() + ",");
 				System.out.println(labelASM(block));
 				break;
 			case NEG:

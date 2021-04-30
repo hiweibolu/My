@@ -119,6 +119,7 @@ public class IRBlockList {
 		blocks.forEach(b -> b.expandLocal());
 		blocks.forEach(b -> b.allocLocal());
 		blocks.forEach(b -> b.calcRAM());
+		blocks.forEach(b -> b.combine());
 	}
 
 	public void printASM(){

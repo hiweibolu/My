@@ -462,8 +462,16 @@ System.out.println("hello");*/
     public void visit(binaryExprNode it) {
 		it.regId = currentBlock.regIdAllocator.alloc(5);
 		IRLine line = null;
+		int short_circuit, expr_end;
 		switch (it.opCode){// short-circuit
 			case andand:
+				if (it.and_short == null) short_circuit = labelAlloc();
+				else{
+					short_circuit = it.and_short;
+					it.shorted = true;
+				}
+				it.lhs.and_short = short_circuit;
+
 				it.lhs.accept(this);
 				int pos = currentBlock.lines.size();
 				it.rhs.accept(this);
@@ -480,13 +488,13 @@ System.out.println("hello");*/
 					return;
 				}
 
-				int short_circuit = labelAlloc(), expr_end = labelAlloc();
-
-				line = new IRLine(lineType.BNEQ);
-				line.args.add(it.lhs.regId);
-				line.args.add(new IRRegIdentifier(0, 0, false));
-				line.label = short_circuit;
-				currentBlock.lines.add(pos, line);
+				if (!it.lhs.shorted){
+					line = new IRLine(lineType.BNEQ);
+					line.args.add(it.lhs.regId);
+					line.args.add(new IRRegIdentifier(0, 0, false));
+					line.label = short_circuit;
+					currentBlock.lines.add(pos, line);
+				}
 
 				//it.rhs.accept(this);
 				line = new IRLine(lineType.BNEQ);
@@ -495,25 +503,35 @@ System.out.println("hello");*/
 				line.label = short_circuit;
 				currentBlock.lines.add(line);
 
-				line = new IRLine(lineType.LOAD);
-				line.args.add(it.regId);
-				line.args.add(new IRRegIdentifier(1, 8, false));
-				currentBlock.lines.add(line);
-				line = new IRLine(lineType.JUMP);
-				line.label = expr_end;
-				currentBlock.lines.add(line);
-				line = new IRLine(lineType.LABEL);
-				line.label = short_circuit;
-				currentBlock.lines.add(line);
-				line = new IRLine(lineType.LOAD);
-				line.args.add(it.regId);
-				line.args.add(new IRRegIdentifier(0, 8, false));
-				currentBlock.lines.add(line);
-				line = new IRLine(lineType.LABEL);
-				line.label = expr_end;
-				currentBlock.lines.add(line);
+				if (it.and_short == null){
+					expr_end = labelAlloc();
+					line = new IRLine(lineType.LOAD);
+					line.args.add(it.regId);
+					line.args.add(new IRRegIdentifier(1, 8, false));
+					currentBlock.lines.add(line);
+					line = new IRLine(lineType.JUMP);
+					line.label = expr_end;
+					currentBlock.lines.add(line);
+					line = new IRLine(lineType.LABEL);
+					line.label = short_circuit;
+					currentBlock.lines.add(line);
+					line = new IRLine(lineType.LOAD);
+					line.args.add(it.regId);
+					line.args.add(new IRRegIdentifier(0, 8, false));
+					currentBlock.lines.add(line);
+					line = new IRLine(lineType.LABEL);
+					line.label = expr_end;
+					currentBlock.lines.add(line);
+				}
 				return;
 			case oror:
+				if (it.or_short == null) short_circuit = labelAlloc();
+				else{
+					short_circuit = it.or_short;
+					it.shorted = true;
+				}
+				it.lhs.or_short = short_circuit;
+
 				it.lhs.accept(this);
 				pos = currentBlock.lines.size();
 				it.rhs.accept(this);
@@ -530,40 +548,40 @@ System.out.println("hello");*/
 					return;
 				}
 
-				short_circuit = labelAlloc();
-				expr_end = labelAlloc();
+				if (!it.lhs.shorted){
+					line = new IRLine(lineType.BEQ);
+					line.args.add(it.lhs.regId);
+					line.args.add(new IRRegIdentifier(0, 0, false));
+					line.label = short_circuit;
+					currentBlock.lines.add(pos, line);
+				}
 
-				//it.lhs.accept(this);
-				line = new IRLine(lineType.BEQ);
-				line.args.add(it.lhs.regId);
-				line.args.add(new IRRegIdentifier(0, 0, false));
-				line.label = short_circuit;
-				currentBlock.lines.add(pos, line);
-
-				//it.rhs.accept(this);
 				line = new IRLine(lineType.BEQ);
 				line.args.add(it.rhs.regId);
 				line.args.add(new IRRegIdentifier(0, 0, false));
 				line.label = short_circuit;
 				currentBlock.lines.add(line);
 				
-				line = new IRLine(lineType.LOAD);
-				line.args.add(it.regId);
-				line.args.add(new IRRegIdentifier(0, 8, false));
-				currentBlock.lines.add(line);
-				line = new IRLine(lineType.JUMP);
-				line.label = expr_end;
-				currentBlock.lines.add(line);
-				line = new IRLine(lineType.LABEL);
-				line.label = short_circuit;
-				currentBlock.lines.add(line);
-				line = new IRLine(lineType.LOAD);
-				line.args.add(it.regId);
-				line.args.add(new IRRegIdentifier(1, 8, false));
-				currentBlock.lines.add(line);
-				line = new IRLine(lineType.LABEL);
-				line.label = expr_end;
-				currentBlock.lines.add(line);
+				if (it.or_short == null){
+					expr_end = labelAlloc();
+					line = new IRLine(lineType.LOAD);
+					line.args.add(it.regId);
+					line.args.add(new IRRegIdentifier(0, 8, false));
+					currentBlock.lines.add(line);
+					line = new IRLine(lineType.JUMP);
+					line.label = expr_end;
+					currentBlock.lines.add(line);
+					line = new IRLine(lineType.LABEL);
+					line.label = short_circuit;
+					currentBlock.lines.add(line);
+					line = new IRLine(lineType.LOAD);
+					line.args.add(it.regId);
+					line.args.add(new IRRegIdentifier(1, 8, false));
+					currentBlock.lines.add(line);
+					line = new IRLine(lineType.LABEL);
+					line.label = expr_end;
+					currentBlock.lines.add(line);
+				}
 
 				return;
 		}

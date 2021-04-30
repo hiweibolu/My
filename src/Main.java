@@ -59,7 +59,7 @@ public class Main {
             	new IRBuilder(gIRList, gScope).visit(ASTRoot);
 				gIRList.optimize();
 				gIRList.printASM();
-
+				//gIRList.print();
 			}
 
         } catch (error er) {

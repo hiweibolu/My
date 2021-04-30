@@ -11,6 +11,8 @@ abstract public class ASTNode {
     public Scope scope;
     public int literal = 0;
 	public boolean inClass = false;
+	public Integer and_short = null, or_short = null;
+	public boolean shorted = false;
 
     public ASTNode(position pos) {
         this.pos = pos;

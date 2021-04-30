@@ -8,11 +8,18 @@ public class Graph {
 	public int n;
 	public ArrayList<ArrayList<Integer> > to = new ArrayList<>();
 	public boolean[] saved;
+	public int[] depth, times;
+
+	public boolean cmp(int a, int b){
+		return depth[a] < depth[b] || depth[a] == depth[b] && times[a] > times[b];
+	}
 
     public Graph(int n) {
 		this.n = n + c.length;
 		for (int i = 0; i < this.n; i++) to.add(new ArrayList<>());
 		saved = new boolean[this.n];
+		depth = new int[this.n];
+		times = new int[this.n];
     }
 
 	public void add(int x, int y){
@@ -136,8 +143,8 @@ public class Graph {
 		}
 		spill_arr.sort((Integer a, Integer b) -> {
 			if (deg[a] < deg[b]) return 1;
-			else if (deg[a] == deg[b]) return 0;
-			return -1;
+			if (deg[b] < deg[a]) return -1;
+			return 0;
 		});
 		
  		for (int i = 0, head = 0; ; i++){

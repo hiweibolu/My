@@ -720,7 +720,6 @@ public class IRBlock {
 					graph.add(id, regId.id - 10 + regIdAllocator.size(5));
 				}
 			}
-
 		}
 	}
 
@@ -845,6 +844,27 @@ public class IRBlock {
 		for (int i = 0; i < lines.size(); i++){
 			System.out.println(i + " : " + reach[i]);
 		}*/
+
+		/*int[] depth = new int[lines.size()];
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			if (jmp_target[i] > 0 && jmp_target[i] < i){
+				for (int j = jmp_target[i]; j <= i; j++){
+					depth[j]++;
+				}
+			}
+		}
+		for (int i = 0; i < lines.size(); i++){
+			IRLine now_line = lines.get(i);
+			for (int j = 0; j < now_line.args.size(); j++){
+				IRRegIdentifier regId = now_line.args.get(j);
+				if (regId.typ == 5){
+					graph.times[regId.id]++;
+					if (graph.depth[regId.id] < depth[i]) graph.depth[regId.id] = depth[i];
+				}
+			}
+		}*/
+
 		graph.work();
 
 		IRRegIdentifier[] spill_reg = new IRRegIdentifier[regIdAllocator.size(5)];
@@ -1521,6 +1541,117 @@ public class IRBlock {
 		}
 		lines = new_lines;
 		//print();
+	}
+
+	public void combine(){
+		ArrayList<IRLine> new_lines = new ArrayList<>();
+		for (int i = 0; i < lines.size(); i++){
+			IRLine line = lines.get(i);
+			if (line.lineCode == lineType.BNEQ && line.args.get(1).id == 0){
+				IRLine last_line = new_lines.get(new_lines.size() - 1);
+				if (def_line(last_line.lineCode) && last_line.args.get(0).equals(line.args.get(0))){
+					IRLine new_line;
+					switch (last_line.lineCode){
+						case EQ:
+							new_line = new IRLine(lineType.BEQ);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						case NEQ:
+							new_line = new IRLine(lineType.BNEQ);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						case LE:
+							new_line = new IRLine(lineType.BGE);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						case GE:
+							new_line = new IRLine(lineType.BLE);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						case LEQ:
+							new_line = new IRLine(lineType.BGT);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						case GEQ:
+							new_line = new IRLine(lineType.BLT);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						default:
+							new_lines.add(line);
+					}
+				}else new_lines.add(line);
+			}else if (line.lineCode == lineType.BEQ && line.args.get(1).id == 0){
+				IRLine last_line = new_lines.get(new_lines.size() - 1);
+				if (def_line(last_line.lineCode) && last_line.args.get(0).equals(line.args.get(0))){
+					IRLine new_line;
+					switch (last_line.lineCode){
+						case EQ:
+							new_line = new IRLine(lineType.BNEQ);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						case NEQ:
+							new_line = new IRLine(lineType.BEQ);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						case LE:
+							new_line = new IRLine(lineType.BLT);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						case GE:
+							new_line = new IRLine(lineType.BGT);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						case LEQ:
+							new_line = new IRLine(lineType.BLE);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						case GEQ:
+							new_line = new IRLine(lineType.BGE);
+							new_line.args.add(last_line.args.get(1));
+							new_line.args.add(last_line.args.get(2));
+							new_line.label = line.label;
+							new_lines.set(new_lines.size() - 1, new_line);
+							break;
+						default:
+							new_lines.add(line);
+					}
+				}else new_lines.add(line);
+			}else new_lines.add(line);
+		}
+		lines = new_lines;
 	}
 
 	//----------------------------------------------------------------------------------------------------------------------------------------------
