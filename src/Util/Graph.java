@@ -146,6 +146,13 @@ public class Graph {
 			if (deg[b] < deg[a]) return -1;
 			return 0;
 		});
+		int rotate_num = 20;
+		if (spill_arr.size() > rotate_num){
+			ArrayList<Integer> new_spill_arr = new ArrayList<>();
+			for (int i = rotate_num; i < spill_arr.size(); i++) new_spill_arr.add(spill_arr.get(i));
+			for (int i = 0; i < rotate_num; i++) new_spill_arr.add(spill_arr.get(i));
+			spill_arr = new_spill_arr;
+		}
 		
  		for (int i = 0, head = 0; ; i++){
 			while (i == color_arr_num && head < spill_arr.size()){
